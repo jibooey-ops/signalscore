@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Methodology — SignalScore</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="nav-placeholder"></div>
+<div class="page-wrap">
+  <div class="container-sm">
+
+    <div style="margin-bottom: 2.5rem;">
+      <div class="page-tag">How we work</div>
+      <h1>Our <span class="accent">Methodology</span></h1>
+      <p class="lead">The rules we follow to ensure this site is genuinely independent and trustworthy. These never change without public notice.</p>
+    </div>
+
+    <div class="card" style="margin-bottom:1.5rem;">
+      <h2 style="margin-bottom:1rem;">How we track signals</h2>
+      <p style="font-family:var(--mono); font-size:13px; color:var(--text2); line-height:1.8;">
+        Every signal published on this site is logged directly from the trader's Telegram channel at the time of posting.
+        We record the entry price, stop loss, and all take profit levels exactly as stated — no editing, no cherry picking, no selective memory.
+      </p>
+    </div>
+
+    <div class="card" style="margin-bottom:1.5rem; border-color:var(--green-border);">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:1rem;">
+        <span style="font-size:1.5rem; color:var(--green);">✓</span>
+        <h2 style="margin-bottom:0;">Our trade closure rule</h2>
+      </div>
+      <p style="font-family:var(--mono); font-size:14px; color:var(--text); line-height:1.8; margin-bottom:1rem;">
+        <strong style="color:var(--green);">A trade is only marked closed when the trader explicitly posts a close, partial close, or final update instruction in their channel.</strong>
+      </p>
+      <p style="font-family:var(--mono); font-size:13px; color:var(--text2); line-height:1.8;">
+        Trades with no close instruction remain marked as OPEN regardless of whether take profit levels were reached in price action.
+        If a trader claims a TP was hit but posts no instruction to close, we do not count it as a win. This is non-negotiable.
+      </p>
+    </div>
+
+    <div class="card" style="margin-bottom:1.5rem;">
+      <h2 style="margin-bottom:1rem;">Why this matters</h2>
+      <p style="font-family:var(--mono); font-size:13px; color:var(--text2); line-height:1.8;">
+        Most signal review sites — and most signal providers themselves — count a trade as a win the moment price touches a TP level.
+        We don't. A trade is only as good as what a real follower could have acted on.
+        If there was no close instruction, a real follower would still be in the trade.
+      </p>
+    </div>
+
+    <div class="section-label" style="margin: 2rem 0 1rem;">Signal status definitions</div>
+
+    <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:2rem;">
+      <div class="card-sm" style="display:flex; align-items:flex-start; gap:14px;">
+        <span class="badge badge-verified" style="flex-shrink:0; margin-top:2px;">Verified</span>
+        <p style="font-family:var(--mono); font-size:13px; color:var(--text2); line-height:1.7;">Entry price confirmed reachable against real historical OHLC data from Alpha Vantage.</p>
+      </div>
+      <div class="card-sm" style="display:flex; align-items:flex-start; gap:14px;">
+        <span class="badge badge-unaudited" style="flex-shrink:0; margin-top:2px;">Unaudited</span>
+        <p style="font-family:var(--mono); font-size:13px; color:var(--text2); line-height:1.7;">From historical Telegram records. Signal structure looks valid but entry price not yet independently confirmed.</p>
+      </div>
+      <div class="card-sm" style="display:flex; align-items:flex-start; gap:14px;">
+        <span class="badge badge-failed" style="flex-shrink:0; margin-top:2px;">Failed</span>
+        <p style="font-family:var(--mono); font-size:13px; color:var(--text2); line-height:1.7;">Entry price was NOT reachable on the stated date. Signal is flagged as a possible fabrication.</p>
+      </div>
+      <div class="card-sm" style="display:flex; align-items:flex-start; gap:14px;">
+        <span class="badge badge-open" style="flex-shrink:0; margin-top:2px;">Open</span>
+        <p style="font-family:var(--mono); font-size:13px; color:var(--text2); line-height:1.7;">Trade has not been explicitly closed by the trader. Not counted in win rate calculations.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:1.5rem;">
+      <h2 style="margin-bottom:1rem;">R multiple — our primary metric</h2>
+      <p style="font-family:var(--mono); font-size:13px; color:var(--text2); line-height:1.8; margin-bottom:1rem;">
+        We measure performance in R multiples, not pips or percentages. 1R means the trader risked 1 unit and gained 1 unit.
+        A stopped out trade = -1R. A breakeven = 0R.
+      </p>
+      <p style="font-family:var(--mono); font-size:13px; color:var(--text2); line-height:1.8;">
+        This is the only metric that allows fair comparison across different assets, position sizes, and risk levels.
+        Win rate alone is meaningless without it — an 80% win rate with 0.3R wins and -1R losses loses money.
+      </p>
+    </div>
+
+    <div class="card" style="margin-bottom:1.5rem;">
+      <h2 style="margin-bottom:1rem;">Independence</h2>
+      <p style="font-family:var(--mono); font-size:13px; color:var(--text2); line-height:1.8;">
+        We are not affiliated with any signal provider. We do not receive payment from Fred Trading, Anders Trading, or any other provider featured on this site.
+        Broker reviews may contain affiliate links — these are clearly labelled. Affiliate relationships do not influence signal logging or ratings.
+      </p>
+    </div>
+
+    <div class="card" style="margin-bottom:1.5rem;">
+      <h2 style="margin-bottom:1rem;">Disputes</h2>
+      <p style="font-family:var(--mono); font-size:13px; color:var(--text2); line-height:1.8;">
+        If a trader believes a signal has been logged incorrectly, they can contact us with evidence. We will review and correct genuine errors publicly and transparently. Corrections are noted in the signal log, never silently edited.
+      </p>
+    </div>
+
+    <p style="font-family:var(--mono); font-size:11px; color:var(--text2); line-height:1.7; border-top:1px solid var(--border); padding-top:1.5rem; margin-top:1rem;">
+      This methodology was established on site launch and applies to all signals logged from day one.
+      Any changes will be announced publicly and will not be applied retrospectively.
+    </p>
+
+  </div>
+</div>
+<div id="footer-placeholder"></div>
+<script src="js/nav.js"></script>
+<script>
+renderNav('methodology');
+renderFooter();
+</script>
+</body>
+</html>

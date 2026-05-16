@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signal Log — SignalScore</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="nav-placeholder"></div>
+<div class="page-wrap">
+  <div class="container">
+
+    <div style="margin-bottom:2rem;">
+      <div class="page-tag">Full track record</div>
+      <h1>Signal <span class="accent">Log</span></h1>
+      <p class="lead">Every signal logged exactly as posted. Live from Google Sheets — updated automatically when new signals are added.</p>
+    </div>
+
+    <div id="loadingState" style="margin-bottom:2rem;">
+      <div class="card-sm" style="display:flex;align-items:center;gap:14px;">
+        <div class="spinner"></div>
+        <span style="font-family:var(--mono);font-size:13px;color:var(--text2);">Loading signals from Google Sheets...</span>
+      </div>
+    </div>
+
+    <div id="errorState" style="display:none;margin-bottom:2rem;">
+      <div class="card-sm" style="background:var(--red-dim);border-color:var(--red-border);">
+        <p style="font-family:var(--mono);font-size:13px;color:var(--red);">Could not load signal data. Check connection or try refreshing.</p>
+        <button onclick="loadSignals()" class="btn btn-outline" style="margin-top:10px;">Retry</button>
+      </div>
+    </div>
+
+    <div id="mainContent" style="display:none;">
+
+      <div class="metric-grid" style="margin-bottom:2rem;">
+        <div class="metric"><div class="metric-label">Total signals</div><div class="metric-value accent" id="m-total">—</div></div>
+        <div class="metric"><div class="metric-label">Win rate</div><div class="metric-value green" id="m-wr">—</div></div>
+        <div class="metric"><div class="metric-label">Total R</div><div class="metric-value green" id="m-r">—</div></div>
+        <div class="metric"><div class="metric-label">Open trades</div><div class="metric-value amber" id="m-open">—</div></div>
+        <div class="metric"><div class="metric-label">Providers</div><div class="metric-value accent" id="m-providers">—</div></div>
+        <div class="metric"><div class="metric-label">Channels</div><div class="metric-value accent" id="m-channels">—</div></div>
+      </div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:1.25rem;align-items:center;">
+        <select id="fTrader" onchange="applyFilters()" style="width:auto;min-width:130px;">
+          <option value="all">All providers</option>
+        </select>
+        <select id="fChannel" onchange="applyFilters()" style="width:auto;min-width:130px;">
+          <option value="all">All channels</option>
+        </select>
+        <select id="fOutcome" onchange="applyFilters()" style="width:auto;min-width:130px;">
+          <option value="all">All outcomes</option>
+          <option value="TP1">TP1</option>
+          <option value="TP2">TP2</option>
+          <option value="TP3">TP3</option>
+          <option value="TP4">TP4</option>
+          <option value="SL">SL</option>
+          <option value="BE">BE</option>
+          <option value="OPEN">Open</option>
+          <option value="CANCELLED">Cancelled</option>
+        </select>
+        <select id="fAsset" onchange="applyFilters()" style="width:auto;min-width:130px;">
+          <option value="all">All assets</option>
+          <option value="XAU/USD">XAU/USD</option>
+          <option value="EUR/USD">EUR/USD</option>
+          <option value="GBP/USD">GBP/USD</option>
+          <option value="US30">US30</option>
+          <option value="NAS100">NAS100</option>
+        </select>
+        <select id="fVerified" onchange="applyFilters()" style="width:auto;min-width:140px;">
+          <option value="all">All statuses</option>
+          <option value="Verified">Verified</option>
+          <option value="Unaudited">Unaudited</option>
+          <option value="Failed">Failed</option>
+          <option value="Pending">Pending</option>
+        </select>
+        <button onclick="loadSignals()" class="btn btn-outline" style="padding:8px 14px;font-size:12px;">↻ Refresh</button>
+        <span style="font-family:var(--mono);font-size:12px;color:var(--text2);margin-left:auto;" id="filterCount"></span>
+      </div>
+
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Provider</th>
+                <th>Channel</th>
+                <th>Asset</th>
+                <th>Dir</th>
+                <th>Entry</th>
+                <th>SL</th>
+                <th>TP1</th>
+                <th>TP2</th>
+                <th>TP3</th>
+                <th>TP4</th>
+                <th>Outcome</th>
+                <th>Pips</th>
+                <th>R</th>
+                <th>Verified</th>
+                <th>Notes</th>
+                <th>Edit</th>
+              </tr>
+            </thead>
+            <tbody id="logBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <p style="font-family:var(--mono);font-size:11px;color:var(--text2);margin-top:1rem;line-height:1.6;" id="lastUpdated"></p>
+    </div>
+  </div>
+</div>
+<div id="footer-placeholder"></div>
+<script src="js/nav.js"></script>
+<script>
+renderNav('signals');
+renderFooter();
+
+const SHEET_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZJRqhOUR38Z7UCDuft0oA7k6EEspr0kBAog4zBlbFRepIgvU1qrCF415pJjBdfbxcCV9rARYm-ffP/pub?gid=1131947645&single=true&output=csv';
+
+var allSignals = [];
+
+function parseCSV(text) {
+  var lines = text.trim().split(/\r?\n/);
+  if (lines.length < 2) return [];
+  var headerIdx = 1;
+  for (var h = 0; h < Math.min(lines.length, 5); h++) {
+    var low = lines[h].toLowerCase();
+    if (low.indexOf('date') !== -1 && low.indexOf('trader') !== -1) { headerIdx = h; break; }
+  }
+  var headers = splitCSVLine(lines[headerIdx]).map(function(h) {
+    return h.trim().toLowerCase().replace(/[^a-z0-9]/g,'');
+  });
+  var dateColIdx = headers.indexOf('date');
+  if (dateColIdx === -1) dateColIdx = 1;
+  var signals = [];
+  for (var i = headerIdx + 1; i < lines.length; i++) {
+    var cols = splitCSVLine(lines[i]);
+    if (!cols[dateColIdx] || cols[dateColIdx].trim().replace(/"/g,'') === '') continue;
+    var obj = {};
+    headers.forEach(function(h, idx) { obj[h] = cols[idx] ? cols[idx].trim().replace(/^"|"$/g,'') : ''; });
+    signals.push(obj);
+  }
+  return signals;
+}
+
+function splitCSVLine(line) {
+  var result = [], cur = '', inQuotes = false;
+  for (var i = 0; i < line.length; i++) {
+    var c = line[i];
+    if (c === '"') { inQuotes = !inQuotes; }
+    else if (c === ',' && !inQuotes) { result.push(cur); cur = ''; }
+    else { cur += c; }
+  }
+  result.push(cur);
+  return result;
+}
+
+function fmtNum(v) {
+  if (!v || v === '') return '—';
+  var clean = String(v).replace(/,/g,'').replace(/[+R]/g,'');
+  var n = parseFloat(clean);
+  return isNaN(n) ? v : (n < 10 ? n.toFixed(4) : n.toFixed(2));
+}
+
+function outcomeClass(o) {
+  if (!o) return '';
+  var ou = o.toUpperCase();
+  if (ou.indexOf('TP') === 0) return 'td-green';
+  if (ou === 'SL') return 'td-red';
+  if (ou === 'BE' || ou === 'CANCELLED') return 'td-muted';
+  return 'td-mono';
+}
+
+function verBadge(v) {
+  var map = {'Verified':'badge-verified','Unaudited':'badge-unaudited','Failed':'badge-failed','Pending':'badge-open'};
+  return '<span class="badge ' + (map[v]||'badge-open') + '">' + (v||'—') + '</span>';
+}
+
+function dirBadge(d) {
+  if (!d) return '—';
+  return '<span class="badge badge-' + d.toLowerCase() + '">' + d + '</span>';
+}
+
+function rClass(r) {
+  if (!r || r === '') return 'td-muted';
+  var n = parseFloat(String(r).replace(/,/g,'').replace(/[+R]/g,''));
+  if (isNaN(n)) return 'td-muted';
+  return n > 0 ? 'td-green' : n < 0 ? 'td-red' : 'td-muted';
+}
+
+function rDisplay(r) {
+  if (!r || r === '') return '—';
+  var n = parseFloat(String(r).replace(/,/g,'').replace(/[+R]/g,''));
+  if (isNaN(n)) return r;
+  return (n > 0 ? '+' : '') + n.toFixed(2) + 'R';
+}
+
+function providerColor(t) {
+  var colors = ['var(--blue)','var(--green)','var(--accent)','var(--amber)','var(--red)'];
+  var providers = [];
+  allSignals.forEach(function(s) {
+    var p = s['trader'] || '';
+    if (p && providers.indexOf(p) === -1) providers.push(p);
+  });
+  var idx = providers.indexOf(t);
+  return colors[idx % colors.length] || 'var(--text)';
+}
+
+function editSignal(s) {
+  var params = new URLSearchParams({
+    edit:        s[''] || '',
+    date:        s['date'] || '',
+    time:        s['time'] || '',
+    trader:      s['trader'] || '',
+    channel:     s['channel'] || s['s'] || '',
+    asset:       s['asset'] || '',
+    direction:   s['direction'] || '',
+    entry:       s['entry'] || '',
+    sl:          s['stoploss'] || s['sl'] || '',
+    tp1:         s['tp1'] || '',
+    tp2:         s['tp2'] || '',
+    tp3:         s['tp3'] || '',
+    tp4:         s['tp4'] || '',
+    outcome:     s['outcome'] || '',
+    close_price: s['closeprice'] || '',
+    verified:    s['verified'] || '',
+    notes:       s['notes'] || ''
+  });
+  window.location.href = 'manual-verifier.html?' + params.toString();
+}
+
+async function loadSignals() {
+  document.getElementById('loadingState').style.display = 'block';
+  document.getElementById('errorState').style.display   = 'none';
+  document.getElementById('mainContent').style.display  = 'none';
+  try {
+    const resp = await fetch(SHEET_CSV + '&t=' + Date.now());
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const text = await resp.text();
+    allSignals = parseCSV(text);
+
+    // Populate provider and channel dropdowns dynamically
+    var providers = [], channels = [];
+    allSignals.forEach(function(s) {
+      var p = s['trader'] || '';
+      var c = s['channel'] || s['s'] || '';
+      if (p && providers.indexOf(p) === -1) providers.push(p);
+      if (c && channels.indexOf(c) === -1) channels.push(c);
+    });
+
+    var tSel = document.getElementById('fTrader');
+    tSel.innerHTML = '<option value="all">All providers</option>';
+    providers.sort().forEach(function(p) {
+      tSel.innerHTML += '<option value="' + p + '">' + p + '</option>';
+    });
+
+    var cSel = document.getElementById('fChannel');
+    cSel.innerHTML = '<option value="all">All channels</option>';
+    channels.sort().forEach(function(c) {
+      cSel.innerHTML += '<option value="' + c + '">' + c + '</option>';
+    });
+
+    document.getElementById('loadingState').style.display = 'none';
+    document.getElementById('mainContent').style.display  = 'block';
+    document.getElementById('lastUpdated').textContent = 'Loaded from Google Sheets — ' + new Date().toLocaleTimeString('en-GB') + '. Click ↻ to refresh.';
+
+    // Check URL params
+    var params = new URLSearchParams(window.location.search);
+    if (params.get('trader')) document.getElementById('fTrader').value = params.get('trader');
+    if (params.get('channel')) document.getElementById('fChannel').value = params.get('channel');
+
+    applyFilters();
+  } catch(e) {
+    document.getElementById('loadingState').style.display = 'none';
+    document.getElementById('errorState').style.display   = 'block';
+    console.error('Sheet load error:', e);
+  }
+}
+
+function applyFilters() {
+  var t  = document.getElementById('fTrader').value;
+  var ch = document.getElementById('fChannel').value;
+  var o  = document.getElementById('fOutcome').value;
+  var a  = document.getElementById('fAsset').value;
+  var v  = document.getElementById('fVerified').value;
+
+  var filtered = allSignals.filter(function(s) {
+    var trader   = s['trader']    || '';
+    var channel  = s['channel']   || s['s'] || '';
+    var outcome  = s['outcome']   || '';
+    var asset    = s['asset']     || '';
+    var verified = s['verified']  || '';
+    return (t  === 'all' || trader  === t)  &&
+           (ch === 'all' || channel === ch) &&
+           (o  === 'all' || outcome.toUpperCase() === o.toUpperCase()) &&
+           (a  === 'all' || asset   === a)  &&
+           (v  === 'all' || verified === v);
+  });
+
+  renderTable(filtered);
+  updateMetrics(filtered);
+}
+
+function renderTable(data) {
+  var body = document.getElementById('logBody');
+  if (!data.length) {
+    body.innerHTML = '<tr><td colspan="18" style="text-align:center;padding:2rem;color:var(--text2);font-family:var(--mono);font-size:13px;">No signals match current filters</td></tr>';
+    document.getElementById('filterCount').textContent = '0 signals';
+    return;
+  }
+  body.innerHTML = data.map(function(s) {
+    var trader  = s['trader']    || '—';
+    var channel = s['channel']   || s['s'] || '—';
+    var outcome = s['outcome']   || '—';
+    var rMult   = s['rmultiple'] || s['r'] || '';
+    return '<tr>' +
+      '<td class="td-muted">' + (s[''] || '') + '</td>' +
+      '<td class="td-mono" style="font-size:12px;">' + (s['date']||'—') + '</td>' +
+      '<td class="td-mono" style="font-size:12px;">' + (s['time']||'—') + '</td>' +
+      '<td><span style="font-family:var(--mono);font-size:12px;font-weight:700;color:' + providerColor(trader) + '">' + trader + '</span></td>' +
+      '<td class="td-muted" style="font-size:12px;">' + channel + '</td>' +
+      '<td class="td-mono" style="font-size:12px;">' + (s['asset']||'—') + '</td>' +
+      '<td>' + dirBadge(s['direction']||'') + '</td>' +
+      '<td class="td-mono">' + fmtNum(s['entry']) + '</td>' +
+      '<td class="td-mono">' + fmtNum(s['stoploss']||s['sl']||'') + '</td>' +
+      '<td class="td-mono">' + fmtNum(s['tp1']) + '</td>' +
+      '<td class="td-mono">' + fmtNum(s['tp2']) + '</td>' +
+      '<td class="td-mono">' + fmtNum(s['tp3']) + '</td>' +
+      '<td class="td-mono">' + fmtNum(s['tp4']) + '</td>' +
+      '<td class="' + outcomeClass(outcome) + '">' + outcome + '</td>' +
+      '<td class="td-mono">' + (s['pips']||'—') + '</td>' +
+      '<td class="' + rClass(rMult) + '">' + rDisplay(rMult) + '</td>' +
+      '<td>' + verBadge(s['verified']||'') + '</td>' +
+      '<td style="color:var(--text2);font-family:var(--mono);font-size:11px;max-width:200px;white-space:normal;">' + (s['notes']||'—') + '</td>' +
+      '<td><button onclick="editSignal(' + JSON.stringify(s) + ')" style="font-family:var(--mono);font-size:11px;padding:4px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--accent);cursor:pointer;">Edit</button></td>' +
+    '</tr>';
+  }).join('');
+  document.getElementById('filterCount').textContent = 'Showing ' + data.length + ' signal' + (data.length !== 1 ? 's' : '');
+}
+
+function updateMetrics(data) {
+  var closed = data.filter(function(s) {
+    var o = (s['outcome']||'').toUpperCase();
+    var r = s['rmultiple']||s['r']||'';
+    return o !== 'OPEN' && o !== 'CANCELLED' && r !== '';
+  });
+  var wins   = closed.filter(function(s) { return parseFloat((s['rmultiple']||s['r']||'0').replace(/,/g,'').replace(/[+R]/g,'')) > 0; });
+  var totalR = closed.reduce(function(acc,s) { return acc + (parseFloat((s['rmultiple']||s['r']||'0').replace(/,/g,'').replace(/[+R]/g,''))||0); }, 0);
+  var open   = data.filter(function(s) { return (s['outcome']||'').toUpperCase() === 'OPEN'; }).length;
+
+  var providers = [], channels = [];
+  allSignals.forEach(function(s) {
+    var p = s['trader']||'', c = s['channel']||s['s']||'';
+    if (p && providers.indexOf(p)===-1) providers.push(p);
+    if (c && channels.indexOf(c)===-1) channels.push(c);
+  });
+
+  document.getElementById('m-total').textContent     = data.length;
+  document.getElementById('m-wr').textContent         = closed.length ? Math.round(wins.length/closed.length*100)+'%' : '—';
+  document.getElementById('m-r').textContent          = closed.length ? (totalR>0?'+':'')+totalR.toFixed(1)+'R' : '—';
+  document.getElementById('m-open').textContent       = open;
+  document.getElementById('m-providers').textContent  = providers.length;
+  document.getElementById('m-channels').textContent   = channels.length;
+}
+
+loadSignals();
+</script>
+</body>
+</html>

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SignalScore — Independent Trading Signal Verification</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="nav-placeholder"></div>
+<div class="page-wrap">
+
+  <!-- Hero -->
+  <section style="padding:4rem 0 3rem;">
+    <div class="container">
+      <div class="page-tag">Independent Signal Verification Platform</div>
+      <h1>Trading signals.<br>Independently <span class="accent">verified</span>.</h1>
+      <p class="lead" style="margin-bottom:2rem;">
+        We track every signal from every provider against real historical price data.
+        No cherry-picking. No self-reporting. Just the honest track record.
+      </p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <a href="signal-log.html" class="btn btn-primary">View signal log →</a>
+        <a href="verifier.html" class="btn btn-outline">Try the verifier</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Live platform stats -->
+  <section style="padding:2rem 0;">
+    <div class="container">
+      <div class="section-label">Live platform stats</div>
+      <div id="platformStats">
+        <div class="metric-grid">
+          <div class="metric"><div class="metric-label">Signals tracked</div><div class="metric-value accent" id="stat-total"><span class="spinner" style="width:16px;height:16px;display:inline-block;"></span></div></div>
+          <div class="metric"><div class="metric-label">Overall win rate</div><div class="metric-value green" id="stat-wr">—</div></div>
+          <div class="metric"><div class="metric-label">Avg R per trade</div><div class="metric-value green" id="stat-avgr">—</div></div>
+          <div class="metric"><div class="metric-label">Total R generated</div><div class="metric-value green" id="stat-totalr">—</div></div>
+          <div class="metric"><div class="metric-label">Providers tracked</div><div class="metric-value accent" id="stat-providers">—</div></div>
+          <div class="metric"><div class="metric-label">Channels tracked</div><div class="metric-value accent" id="stat-channels">—</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Provider Leaderboard -->
+  <section style="padding:2rem 0;">
+    <div class="container">
+      <div class="section-label">Provider leaderboard</div>
+      <p style="font-family:var(--mono);font-size:12px;color:var(--text2);margin-bottom:1.5rem;">
+        Ranked by SignalScore — a composite of win rate, average R, signal volume and verification status.
+        Only closed, confirmed trades are counted.
+      </p>
+
+      <div id="leaderboard">
+        <div class="card-sm" style="display:flex;align-items:center;gap:14px;">
+          <div class="spinner"></div>
+          <span style="font-family:var(--mono);font-size:13px;color:var(--text2);">Loading leaderboard...</span>
+        </div>
+      </div>
+
+      <div style="text-align:center;margin-top:1.5rem;">
+        <a href="signal-log.html" class="btn btn-outline">View all signals →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Why SignalScore -->
+  <section style="padding:2rem 0;">
+    <div class="container">
+      <div class="section-label">Why SignalScore</div>
+      <div class="grid3">
+        <div class="card-sm">
+          <div style="font-size:1.5rem;margin-bottom:12px;color:var(--accent);">✓</div>
+          <h3>Independent verification</h3>
+          <p style="font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.7;margin-top:8px;">
+            Every entry price checked against real hourly OHLC data from Twelve Data. Not screenshots. Not claims.
+          </p>
+        </div>
+        <div class="card-sm">
+          <div style="font-size:1.5rem;margin-bottom:12px;color:var(--accent);">⊘</div>
+          <h3>Honest close policy</h3>
+          <p style="font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.7;margin-top:8px;">
+            A trade is only logged as closed when the trader explicitly posts a close instruction. No assumed wins.
+          </p>
+        </div>
+        <div class="card-sm">
+          <div style="font-size:1.5rem;margin-bottom:12px;color:var(--accent);">R</div>
+          <h3>R multiple scoring</h3>
+          <p style="font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.7;margin-top:8px;">
+            We measure in R multiples — the only metric that allows honest comparison across assets and position sizes.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section style="padding:3rem 0;">
+    <div class="container">
+      <div class="card" style="text-align:center;padding:3rem;">
+        <div class="page-tag" style="justify-content:center;margin-bottom:1rem;">Verify any signal</div>
+        <h2 style="margin-bottom:0.75rem;">Paste a signal. Get the truth.</h2>
+        <p style="font-family:var(--mono);font-size:13px;color:var(--text2);margin-bottom:1.5rem;line-height:1.7;">
+          Our verifier checks every price level against real market data using hourly candles.<br>Know before you trade.
+        </p>
+        <a href="verifier.html" class="btn btn-primary">Open signal verifier →</a>
+      </div>
+    </div>
+  </section>
+
+</div>
+<div id="footer-placeholder"></div>
+<script src="js/nav.js"></script>
+<script>
+renderNav('home');
+renderFooter();
+
+const SHEET_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZJRqhOUR38Z7UCDuft0oA7k6EEspr0kBAog4zBlbFRepIgvU1qrCF415pJjBdfbxcCV9rARYm-ffP/pub?gid=1131947645&single=true&output=csv';
+
+function splitCSVLine(line) {
+  var result=[], cur='', inQ=false;
+  for (var i=0;i<line.length;i++) {
+    var c=line[i];
+    if (c==='"') { inQ=!inQ; }
+    else if (c===',' && !inQ) { result.push(cur); cur=''; }
+    else { cur+=c; }
+  }
+  result.push(cur);
+  return result;
+}
+
+function parseCSV(text) {
+  var lines = text.trim().split(/\r?\n/);
+  var headerIdx = 1;
+  for (var h=0;h<Math.min(lines.length,5);h++) {
+    var low=lines[h].toLowerCase();
+    if (low.indexOf('date')!==-1 && low.indexOf('trader')!==-1) { headerIdx=h; break; }
+  }
+  var headers = splitCSVLine(lines[headerIdx]).map(function(h) {
+    return h.trim().toLowerCase().replace(/[^a-z0-9]/g,'');
+  });
+  var dateIdx = headers.indexOf('date'); if (dateIdx===-1) dateIdx=1;
+  var signals = [];
+  for (var i=headerIdx+1;i<lines.length;i++) {
+    var cols = splitCSVLine(lines[i]);
+    if (!cols[dateIdx]||cols[dateIdx].trim().replace(/"/g,'')==='') continue;
+    var obj={};
+    headers.forEach(function(h,idx){ obj[h]=cols[idx]?cols[idx].trim().replace(/^"|"$/g,''):''; });
+    signals.push(obj);
+  }
+  return signals;
+}
+
+function cleanR(v) {
+  if (!v||v==='') return null;
+  var n = parseFloat(String(v).replace(/,/g,'').replace(/[+R]/g,''));
+  return isNaN(n) ? null : n;
+}
+
+function calcScore(wr, avgR, total, verifiedPct) {
+  // SignalScore: 40% win rate + 30% avg R + 20% volume + 10% verification
+  var wrScore  = Math.min(wr * 100, 100) * 0.40;
+  var rScore   = Math.min(Math.max(avgR * 25, 0), 100) * 0.30;
+  var volScore = Math.min(total / 2, 100) * 0.20;
+  var verScore = Math.min(verifiedPct * 100, 100) * 0.10;
+  return Math.round(wrScore + rScore + volScore + verScore);
+}
+
+function scoreColor(score) {
+  if (score >= 80) return 'var(--green)';
+  if (score >= 60) return 'var(--amber)';
+  return 'var(--red)';
+}
+
+function medal(rank) {
+  if (rank===1) return '🥇';
+  if (rank===2) return '🥈';
+  if (rank===3) return '🥉';
+  return rank + '.';
+}
+
+async function loadData() {
+  try {
+    const resp = await fetch(SHEET_CSV + '&t=' + Date.now());
+    const text = await resp.text();
+    const signals = parseCSV(text);
+
+    // Group by provider
+    var providers = {};
+    signals.forEach(function(s) {
+      var trader  = s['trader']  || 'Unknown';
+      var channel = s['channel'] || s['s'] || '';
+      var outcome = (s['outcome']||'').toUpperCase();
+      var rVal    = cleanR(s['rmultiple']||s['r']||'');
+      var verified= s['verified']||'';
+
+      if (!providers[trader]) {
+        providers[trader] = {
+          name: trader, channels: [], signals: 0,
+          closed: 0, wins: 0, totalR: 0, verified: 0
+        };
+      }
+      var p = providers[trader];
+      p.signals++;
+      if (channel && p.channels.indexOf(channel)===-1) p.channels.push(channel);
+      if (outcome !== 'OPEN' && outcome !== 'CANCELLED' && rVal !== null) {
+        p.closed++;
+        if (rVal > 0) p.wins++;
+        p.totalR += rVal;
+      }
+      if (verified === 'Verified') p.verified++;
+    });
+
+    // Calculate scores and sort
+    var leaderboard = Object.values(providers).map(function(p) {
+      var wr  = p.closed > 0 ? p.wins / p.closed : 0;
+      var avgR = p.closed > 0 ? p.totalR / p.closed : 0;
+      var verPct = p.signals > 0 ? p.verified / p.signals : 0;
+      var score = calcScore(wr, avgR, p.signals, verPct);
+      return Object.assign(p, { wr:wr, avgR:avgR, score:score });
+    }).sort(function(a,b) { return b.score - a.score; });
+
+    // Platform stats
+    var allClosed = signals.filter(function(s) {
+      var o=(s['outcome']||'').toUpperCase();
+      return o!=='OPEN'&&o!=='CANCELLED'&&cleanR(s['rmultiple']||s['r']||'')!==null;
+    });
+    var allWins = allClosed.filter(function(s){ return cleanR(s['rmultiple']||s['r']||'')>0; });
+    var totalR  = allClosed.reduce(function(a,s){ return a+(cleanR(s['rmultiple']||s['r']||'')||0); },0);
+    var avgR    = allClosed.length ? totalR/allClosed.length : 0;
+    var allChannels = [];
+    signals.forEach(function(s){ var c=s['channel']||s['s']||''; if(c&&allChannels.indexOf(c)===-1) allChannels.push(c); });
+
+    document.getElementById('stat-total').textContent     = signals.length;
+    document.getElementById('stat-wr').textContent         = allClosed.length ? Math.round(allWins.length/allClosed.length*100)+'%' : '—';
+    document.getElementById('stat-avgr').textContent       = allClosed.length ? (avgR>0?'+':'')+avgR.toFixed(2)+'R' : '—';
+    document.getElementById('stat-totalr').textContent     = allClosed.length ? (totalR>0?'+':'')+totalR.toFixed(1)+'R' : '—';
+    document.getElementById('stat-providers').textContent  = leaderboard.length;
+    document.getElementById('stat-channels').textContent   = allChannels.length;
+
+    // Render leaderboard — top 3 + "view more"
+    var top3 = leaderboard.slice(0, 3);
+    var rest = leaderboard.slice(3);
+
+    var html = top3.map(function(p, i) {
+      var rank = i + 1;
+      var wrPct = Math.round(p.wr * 100);
+      var channelStr = p.channels.length ? p.channels.join(', ') : '—';
+      return '<div class="card" style="margin-bottom:12px;display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;">' +
+        '<div style="font-size:2rem;flex-shrink:0;">' + medal(rank) + '</div>' +
+        '<div style="flex:1;min-width:160px;">' +
+          '<div style="font-size:18px;font-weight:700;letter-spacing:-0.02em;margin-bottom:4px;">' + p.name + '</div>' +
+          '<div style="font-family:var(--mono);font-size:11px;color:var(--text2);">Channels: ' + channelStr + '</div>' +
+        '</div>' +
+        '<div style="display:flex;gap:1.5rem;flex-wrap:wrap;align-items:center;">' +
+          '<div style="text-align:center;">' +
+            '<div style="font-size:2rem;font-weight:800;color:' + scoreColor(p.score) + ';letter-spacing:-0.03em;">' + p.score + '</div>' +
+            '<div style="font-family:var(--mono);font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:0.1em;">Score</div>' +
+          '</div>' +
+          '<div style="text-align:center;">' +
+            '<div style="font-size:1.4rem;font-weight:700;color:var(--green);">' + wrPct + '%</div>' +
+            '<div style="font-family:var(--mono);font-size:10px;color:var(--text2);">Win rate</div>' +
+          '</div>' +
+          '<div style="text-align:center;">' +
+            '<div style="font-size:1.4rem;font-weight:700;color:' + (p.avgR>=0?'var(--green)':'var(--red)') + '">' + (p.avgR>=0?'+':'') + p.avgR.toFixed(2) + 'R</div>' +
+            '<div style="font-family:var(--mono);font-size:10px;color:var(--text2);">Avg R</div>' +
+          '</div>' +
+          '<div style="text-align:center;">' +
+            '<div style="font-size:1.4rem;font-weight:700;color:var(--text);">' + p.signals + '</div>' +
+            '<div style="font-family:var(--mono);font-size:10px;color:var(--text2);">Signals</div>' +
+          '</div>' +
+          '<a href="signal-log.html?trader=' + encodeURIComponent(p.name) + '" class="btn btn-outline" style="font-size:12px;padding:8px 14px;">View →</a>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    if (rest.length > 0) {
+      html += '<div id="restLeaderboard" style="display:none;">' +
+        rest.map(function(p, i) {
+          var rank = i + 4;
+          var wrPct = Math.round(p.wr * 100);
+          return '<div class="card-sm" style="margin-bottom:8px;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">' +
+            '<div style="font-family:var(--mono);font-size:13px;color:var(--text2);width:24px;">' + medal(rank) + '</div>' +
+            '<div style="flex:1;font-weight:600;">' + p.name + '</div>' +
+            '<div style="font-family:var(--mono);font-size:13px;color:' + scoreColor(p.score) + ';font-weight:700;">' + p.score + '</div>' +
+            '<div style="font-family:var(--mono);font-size:12px;color:var(--green);">' + wrPct + '%</div>' +
+            '<div style="font-family:var(--mono);font-size:12px;color:var(--text2);">' + p.signals + ' signals</div>' +
+            '<a href="signal-log.html?trader=' + encodeURIComponent(p.name) + '" class="btn btn-outline" style="font-size:11px;padding:6px 10px;">View →</a>' +
+          '</div>';
+        }).join('') +
+      '</div>' +
+      '<button onclick="toggleRest()" id="toggleBtn" class="btn btn-outline" style="width:100%;margin-top:8px;font-size:13px;">Show ' + rest.length + ' more provider' + (rest.length!==1?'s':'') + ' ↓</button>';
+    }
+
+    document.getElementById('leaderboard').innerHTML = html || '<div class="card-sm"><p style="font-family:var(--mono);font-size:13px;color:var(--text2);">No provider data yet.</p></div>';
+
+  } catch(e) {
+    document.getElementById('leaderboard').innerHTML = '<div class="card-sm"><p style="font-family:var(--mono);font-size:13px;color:var(--red);">Could not load leaderboard data.</p></div>';
+    console.error(e);
+  }
+}
+
+function toggleRest() {
+  var el  = document.getElementById('restLeaderboard');
+  var btn = document.getElementById('toggleBtn');
+  if (el.style.display === 'none') {
+    el.style.display = 'block';
+    btn.textContent = 'Show fewer ↑';
+  } else {
+    el.style.display = 'none';
+    btn.textContent = btn.textContent.replace('Show fewer ↑', btn.dataset.original||'Show more ↓');
+  }
+}
+
+loadData();
+</script>
+</body>
+</html>

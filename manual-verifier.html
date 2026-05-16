@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manual Verifier — SignalScore</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div style="background:var(--amber-dim);border:1px solid var(--amber-border);padding:8px 16px;font-family:var(--mono);font-size:12px;color:var(--amber);text-align:center;">🥁 BONGO v2 — Manual Verifier</div>
+<div id="nav-placeholder"></div>
+<div class="page-wrap">
+  <div class="container-sm">
+
+    <div style="margin-bottom:2rem;">
+      <div class="page-tag">Manual entry tool</div>
+      <h1>Manual <span class="accent">Verifier</span></h1>
+      <p class="lead">Enter signal details manually for verification, or log an update to an existing signal.</p>
+    </div>
+
+    <!-- Mode toggle -->
+    <div style="display:flex; gap:0; margin-bottom:2rem; border:1px solid var(--border); border-radius:8px; overflow:hidden;">
+      <button id="btnNew" onclick="setMode('new')" style="flex:1; padding:12px; font-family:var(--mono); font-size:13px; border:none; cursor:pointer; background:var(--accent); color:#fff; font-weight:700;">New Signal</button>
+      <button id="btnUpdate" onclick="setMode('update')" style="flex:1; padding:12px; font-family:var(--mono); font-size:13px; border:none; cursor:pointer; background:var(--surface2); color:var(--text2);">Update Existing</button>
+    </div>
+
+    <!-- NEW SIGNAL MODE -->
+    <div id="modeNew">
+
+      <div class="grid3" style="margin-bottom:1rem;">
+        <div class="form-group">
+          <label class="form-label">Date (DD/MM/YYYY)</label>
+          <input type="date" id="nDate" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Time (24hr)</label>
+          <input type="time" id="nTime" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Trader / Signal Provider</label>
+          <input type="text" id="nTrader" placeholder="e.g. Fred, Anders..."
+            autocomplete="off" list="traderList" 
+            onblur="addToProviderList(this.value)" />
+          <datalist id="traderList">
+            <option value="Fred">
+            <option value="Anders">
+            <option value="Lewis Community">
+          </datalist>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Channel</label>
+          <input type="text" id="nChannel" placeholder="e.g. Main, Live, Gold, Forex..."
+            autocomplete="off" list="channelList" />
+          <datalist id="channelList">
+            <option value="Main">
+            <option value="Live">
+            <option value="VIP">
+            <option value="Gold">
+            <option value="Forex">
+            <option value="Free">
+          </datalist>
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-bottom:1rem;">
+        <div class="form-group">
+          <label class="form-label">Asset</label>
+          <select id="nAsset">
+            <option value="XAU/USD">XAU/USD — Gold</option>
+            <option value="EUR/USD">EUR/USD</option>
+            <option value="GBP/USD">GBP/USD</option>
+            <option value="USD/JPY">USD/JPY</option>
+            <option value="GBP/JPY">GBP/JPY</option>
+            <option value="EUR/JPY">EUR/JPY</option>
+            <option value="US30">US30</option>
+            <option value="NAS100">NAS100</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Direction</label>
+          <select id="nDir">
+            <option value="BUY">BUY</option>
+            <option value="SELL">SELL</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid3" style="margin-bottom:1rem;">
+        <div class="form-group">
+          <label class="form-label">Entry price</label>
+          <input type="number" id="nEntry" placeholder="e.g. 4566" step="0.00001" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Stop loss</label>
+          <input type="number" id="nSL" placeholder="e.g. 4536" step="0.00001" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Risk note</label>
+          <select id="nRisk">
+            <option value="">Full risk</option>
+            <option value="Half risk">Half risk</option>
+            <option value="Quarter risk">Quarter risk</option>
+            <option value="Low confidence">Low confidence</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid4" style="margin-bottom:1rem;">
+        <div class="form-group">
+          <label class="form-label">TP1</label>
+          <input type="number" id="nTP1" placeholder="TP1" step="0.00001" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">TP2</label>
+          <input type="number" id="nTP2" placeholder="TP2" step="0.00001" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">TP3</label>
+          <input type="number" id="nTP3" placeholder="TP3" step="0.00001" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">TP4</label>
+          <input type="number" id="nTP4" placeholder="TP4" step="0.00001" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Additional notes</label>
+        <input type="text" id="nNotes" placeholder="e.g. Low confidence, risky for Asia session" />
+      </div>
+
+      <!-- Edit mode extra fields — shown when editing existing signal -->
+      <div id="editExtraFields" style="display:none;">
+        <div class="grid2" style="margin-bottom:1rem;">
+          <div class="form-group">
+            <label class="form-label">Outcome</label>
+            <select id="eOutcome">
+              <option value="OPEN">OPEN</option>
+              <option value="TP1">TP1</option>
+              <option value="TP2">TP2</option>
+              <option value="TP3">TP3</option>
+              <option value="TP4">TP4</option>
+              <option value="SL">SL</option>
+              <option value="BE">BE</option>
+              <option value="CANCELLED">CANCELLED</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Close price</label>
+            <input type="number" id="eClosePrice" placeholder="e.g. 4746" step="0.00001" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Verified status</label>
+          <select id="eVerified">
+            <option value="Pending">Pending</option>
+            <option value="Verified">Verified</option>
+            <option value="Unaudited">Unaudited</option>
+            <option value="Failed">Failed</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px; margin-bottom:2rem;">
+        <button class="btn btn-primary" onclick="verifyNew()" id="verifyBtn" style="flex:1;">Verify &amp; generate log entry</button>
+        <button class="btn btn-outline" onclick="clearNew()">Clear</button>
+      </div>
+
+      <!-- Loading -->
+      <div id="newLoading" style="display:none; margin-bottom:1rem;">
+        <div class="card-sm" style="display:flex; align-items:center; gap:14px;">
+          <div class="spinner"></div>
+          <span style="font-family:var(--mono); font-size:13px; color:var(--text2);" id="newLoadMsg">Fetching OHLC data...</span>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div id="newResults" style="display:none;">
+
+        <div id="newVerdict" style="margin-bottom:1rem;"></div>
+
+        <div class="card-sm" style="margin-bottom:1rem;">
+          <div class="section-label" style="margin-bottom:1rem;">Verification checks</div>
+          <div id="newChecks"></div>
+        </div>
+
+        <div class="card-sm" style="margin-bottom:1rem;">
+          <div class="section-label" style="margin-bottom:1rem;">OHLC price check</div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Level</th><th>Price</th><th>Day low</th><th>Day high</th><th>Status</th></tr></thead>
+              <tbody id="newOHLC"></tbody>
+            </table>
+          </div>
+          <p style="font-family:var(--mono); font-size:11px; color:var(--text2); margin-top:8px;" id="newSource"></p>
+        </div>
+
+        <div class="card-sm" style="margin-bottom:1rem; background:var(--surface2);">
+          <div class="section-label" style="margin-bottom:1rem;">Log entry — copy to spreadsheet</div>
+          <div id="logEntry"></div>
+          <div style="display:flex; gap:10px; margin-top:1rem; flex-wrap:wrap;">
+            <button onclick="saveToSheet()" id="saveBtn" class="btn btn-primary" style="flex:1;">Save to Google Sheet</button>
+            <button onclick="openTV()" class="btn btn-outline" style="flex:1;">View on TradingView ↗</button>
+            <button onclick="copyLog()" class="btn btn-outline" style="flex:1;">Copy to clipboard</button>
+          </div>
+          <p style="font-family:var(--mono);font-size:11px;color:var(--text2);margin-top:8px;">Signal saves regardless of verification status — Verified, Unaudited or Failed all get logged.</p>
+          <div id="saveStatus" style="display:none; margin-top:10px; font-family:var(--mono); font-size:12px; text-align:center;"></div>
+        </div>
+
+        <!-- Update button -->
+        <div style="margin-top:1rem; padding:1rem; background:var(--amber-dim); border:1px solid var(--amber-border); border-radius:8px;">
+          <p style="font-family:var(--mono); font-size:12px; color:var(--amber); margin-bottom:8px;">⚠ Need to log an update to this signal later?</p>
+          <button onclick="switchToUpdateWithData()" class="btn btn-outline" style="width:100%; border-color:var(--amber-border); color:var(--amber);">Log an update to this signal →</button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- UPDATE MODE -->
+    <div id="modeUpdate" style="display:none;">
+
+      <div class="grid2" style="margin-bottom:1rem;">
+        <div class="form-group">
+          <label class="form-label">Signal ID (from log)</label>
+          <input type="number" id="uID" placeholder="e.g. 42" min="1" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Trader / Signal Provider</label>
+          <input type="text" id="uTrader" placeholder="e.g. Fred, Anders..."
+            autocomplete="off" list="traderList2" />
+          <datalist id="traderList2">
+            <option value="Fred">
+            <option value="Anders">
+            <option value="FredTrading VIP">
+            <option value="AndersTrading">
+          </datalist>
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-bottom:1rem;">
+        <div class="form-group">
+          <label class="form-label">Update date</label>
+          <input type="date" id="uDate" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Update time</label>
+          <input type="time" id="uTime" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Update type</label>
+        <select id="uType" onchange="updateTypeChanged()">
+          <option value="">Select update type...</option>
+          <optgroup label="SL Moves">
+            <option value="SL to breakeven">SL moved to breakeven (entry)</option>
+            <option value="SL to TP1">SL moved to TP1</option>
+            <option value="SL to TP2">SL moved to TP2</option>
+            <option value="SL to TP3">SL moved to TP3</option>
+            <option value="Custom SL move">Custom SL move</option>
+          </optgroup>
+          <optgroup label="Partial Closes">
+            <option value="Partial close at TP1">Partial close at TP1</option>
+            <option value="Partial close at TP2">Partial close at TP2</option>
+            <option value="Partial close at TP3">Partial close at TP3</option>
+          </optgroup>
+          <optgroup label="Full Closes">
+            <option value="Closed at TP1">Closed at TP1</option>
+            <option value="Closed at TP2">Closed at TP2</option>
+            <option value="Closed at TP3">Closed at TP3</option>
+            <option value="Closed at TP4">Closed at TP4</option>
+            <option value="Stopped out (SL hit)">Stopped out — SL hit</option>
+            <option value="Closed manually">Closed manually</option>
+            <option value="Cancelled before entry">Cancelled before entry</option>
+          </optgroup>
+          <optgroup label="Risk Changes">
+            <option value="Risk reduced to half">Risk reduced to half</option>
+            <option value="Risk reduced to quarter">Risk reduced to quarter</option>
+          </optgroup>
+        </select>
+      </div>
+
+      <!-- Custom SL price (shown when needed) -->
+      <div id="customSLBox" style="display:none;" class="form-group">
+        <label class="form-label">New SL price</label>
+        <input type="number" id="uNewSL" placeholder="e.g. 4566" step="0.00001" />
+      </div>
+
+      <!-- Close price (shown for close types) -->
+      <div id="closePriceBox" style="display:none;" class="form-group">
+        <label class="form-label">Close price</label>
+        <input type="number" id="uClosePrice" placeholder="e.g. 4597" step="0.00001" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Raw message (paste Telegram update)</label>
+        <textarea id="uRaw" rows="3" placeholder="e.g. SL entry TP1&#10;or&#10;Close everything now"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Additional context</label>
+        <input type="text" id="uNotes" placeholder="Any extra notes about this update" />
+      </div>
+
+      <button class="btn btn-primary" onclick="generateUpdate()" style="width:100%; margin-bottom:2rem;">Generate update note</button>
+
+      <!-- Update result -->
+      <div id="updateResult" style="display:none;">
+        <div class="card-sm" style="background:var(--surface2); margin-bottom:1rem;">
+          <div class="section-label" style="margin-bottom:1rem;">Update note — paste into Notes column</div>
+          <div id="updateNote" style="font-family:var(--mono); font-size:13px; color:var(--text); line-height:1.8; padding:12px; background:var(--surface); border-radius:6px; border:1px solid var(--border);"></div>
+          <button onclick="copyUpdate()" class="btn btn-outline" style="margin-top:1rem; width:100%;">Copy update note</button>
+        </div>
+
+        <div class="card-sm">
+          <div class="section-label" style="margin-bottom:1rem;">Spreadsheet action</div>
+          <div id="sheetAction" style="font-family:var(--mono); font-size:13px; color:var(--text2); line-height:1.8;"></div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+<div id="footer-placeholder"></div>
+<script src="js/nav.js"></script>
+<script>
+renderNav('verifier');
+renderFooter();
+
+// Detect incoming edit parameters from signal log
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  if (!params.get('edit')) return;
+
+  // Switch to new signal mode but in edit context
+  var editId = params.get('edit');
+
+  // Pre-fill all fields
+  var setVal = function(id, val) {
+    var el = document.getElementById(id);
+    if (el && val) el.value = val;
+  };
+
+  setVal('nDate',    params.get('date'));
+  setVal('nTime',    params.get('time'));
+  setVal('nTrader',  params.get('trader'));
+  setVal('nChannel', params.get('channel'));
+  setVal('nEntry',   params.get('entry'));
+  setVal('nSL',      params.get('sl'));
+  setVal('nTP1',     params.get('tp1'));
+  setVal('nTP2',     params.get('tp2'));
+  setVal('nTP3',     params.get('tp3'));
+  setVal('nTP4',     params.get('tp4'));
+  setVal('nNotes',   params.get('notes'));
+
+  // Set asset dropdown
+  var assetEl = document.getElementById('nAsset');
+  if (assetEl && params.get('asset')) assetEl.value = params.get('asset');
+
+  // Set direction
+  var dirEl = document.getElementById('nDir');
+  if (dirEl && params.get('direction')) dirEl.value = params.get('direction');
+
+  // Set risk note if present
+  var riskEl = document.getElementById('nRisk');
+  if (riskEl && params.get('notes') && params.get('notes').toLowerCase().indexOf('half risk') !== -1) {
+    riskEl.value = 'Half risk';
+  }
+
+  // Show edit banner
+  var editBanner = document.createElement('div');
+  editBanner.style.cssText = 'background:var(--amber-dim);border:1px solid var(--amber-border);border-radius:8px;padding:12px 16px;margin-bottom:1.5rem;display:flex;align-items:center;gap:12px;';
+  editBanner.innerHTML = '<span style="font-size:16px;">✏️</span>' +
+    '<div>' +
+      '<div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--amber);">EDITING SIGNAL #' + editId + '</div>' +
+      '<div style="font-family:var(--mono);font-size:11px;color:var(--text2);margin-top:2px;">All fields pre-filled from signal log. Make your changes and save — the original row will be updated with an edit timestamp.</div>' +
+    '</div>';
+
+  // Insert banner at top of form
+  var firstGroup = document.querySelector('#modeNew .grid3');
+  if (firstGroup) firstGroup.parentNode.insertBefore(editBanner, firstGroup);
+
+  // Store edit ID for save function
+  window._editSignalId = editId;
+  window._editOutcome   = params.get('outcome') || 'OPEN';
+  window._editClosePrice = params.get('close_price') || '';
+  window._editVerified  = params.get('verified') || 'Pending';
+
+  // Show and pre-fill edit extra fields
+  setTimeout(function() {
+    var btn = document.getElementById('verifyBtn');
+    if (btn) btn.textContent = 'Verify & update signal #' + editId;
+    var saveBtn = document.getElementById('saveBtn');
+    if (saveBtn) saveBtn.textContent = 'Update signal #' + editId + ' in sheet';
+
+    var extra = document.getElementById('editExtraFields');
+    if (extra) extra.style.display = 'block';
+
+    var outcomeEl = document.getElementById('eOutcome');
+    if (outcomeEl && params.get('outcome')) outcomeEl.value = params.get('outcome');
+
+    var cpEl = document.getElementById('eClosePrice');
+    if (cpEl && params.get('close_price')) cpEl.value = params.get('close_price');
+
+    var verEl = document.getElementById('eVerified');
+    if (verEl && params.get('verified')) verEl.value = params.get('verified');
+  }, 100);
+})();
+
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyHa8gqU7abkrsvd20HzXzbmaPFsOlNHSZHWBoU62Ok8cZKOehsDwOmngqC0AaaT2c/exec';
+
+const TWELVE_KEY = 'd2864f2dd0f04053bc6f006fc26fb7e9';
+
+const assetMap = {
+  'XAU/USD': 'XAU/USD',
+  'EUR/USD': 'EUR/USD',
+  'GBP/USD': 'GBP/USD',
+  'USD/JPY': 'USD/JPY',
+  'GBP/JPY': 'GBP/JPY',
+  'EUR/JPY': 'EUR/JPY',
+  'AUD/USD': 'AUD/USD',
+  'US30':    'DJI',
+  'NAS100':  'NDX',
+};
+
+function setMode(mode) {
+  document.getElementById('modeNew').style.display    = mode === 'new'    ? 'block' : 'none';
+  document.getElementById('modeUpdate').style.display = mode === 'update' ? 'block' : 'none';
+  document.getElementById('btnNew').style.background    = mode === 'new'    ? 'var(--accent)' : 'var(--surface2)';
+  document.getElementById('btnNew').style.color         = mode === 'new'    ? '#fff' : 'var(--text2)';
+  document.getElementById('btnUpdate').style.background = mode === 'update' ? 'var(--accent)' : 'var(--surface2)';
+  document.getElementById('btnUpdate').style.color      = mode === 'update' ? '#fff' : 'var(--text2)';
+}
+
+function switchToUpdateWithData() {
+  var traderVal  = document.getElementById('nTrader').value || '';
+  var channelVal = document.getElementById('nChannel') ? document.getElementById('nChannel').value || '' : '';
+
+  // Try to get signal ID from currentSignalData if saved
+  if (currentSignalData && currentSignalData.signalId) {
+    document.getElementById('uID').value = currentSignalData.signalId;
+  }
+
+  // Also try save status message
+  var statusEl = document.getElementById('saveStatus');
+  if (statusEl && statusEl.textContent) {
+    var match = statusEl.textContent.match(/ID[:\s]+(\d+)/);
+    if (match) document.getElementById('uID').value = match[1];
+    var rowMatch = statusEl.textContent.match(/row\s+(\d+)/i);
+    if (rowMatch && !document.getElementById('uID').value) {
+      document.getElementById('uID').value = parseInt(rowMatch[1]) - 2;
+    }
+  }
+
+  if (traderVal)  document.getElementById('uTrader').value  = traderVal;
+  if (channelVal && document.getElementById('uChannel')) document.getElementById('uChannel').value = channelVal;
+
+  setMode('update');
+  document.getElementById('modeUpdate').scrollIntoView({ behavior:'smooth' });
+}
+
+function switchToUpdate() {
+  setMode('update');
+  document.getElementById('modeUpdate').scrollIntoView({ behavior:'smooth' });
+}
+
+function updateTypeChanged() {
+  const t = document.getElementById('uType').value;
+  document.getElementById('customSLBox').style.display  = t === 'Custom SL move' ? 'block' : 'none';
+  const closeTypes = ['Closed at TP1','Closed at TP2','Closed at TP3','Closed at TP4','Stopped out (SL hit)','Closed manually'];
+  document.getElementById('closePriceBox').style.display = closeTypes.includes(t) ? 'block' : 'none';
+}
+
+function fmt(n) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  return n < 10 ? n.toFixed(5) : n.toFixed(2);
+}
+
+function checkRow(cls, text) {
+  checkTexts = checkTexts || [];
+  checkTexts.push((cls==='fail'?'✗':cls==='warn'?'⚠':cls==='pass'?'✓':'ℹ') + ' ' + text);
+  const icons  = { pass:'✓', fail:'✗', warn:'⚠', info:'ℹ' };
+  const colors = { pass:'var(--green)', fail:'var(--red)', warn:'var(--amber)', info:'var(--blue)' };
+  return '<div style="display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;line-height:1.5;">' +
+    '<span style="font-size:15px;width:20px;text-align:center;flex-shrink:0;color:' + colors[cls] + ';">' + icons[cls] + '</span>' +
+    '<span>' + text + '</span></div>';
+}
+
+function logRow(label, val) {
+  return '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;">' +
+    '<span style="font-family:var(--mono);font-size:12px;color:var(--text2);">' + label + '</span>' +
+    '<span style="font-family:var(--mono);font-weight:700;">' + val + '</span></div>';
+}
+
+async function fetchOHLC(asset, date, signalTime) {
+  var symbol = assetMap[asset];
+  if (!symbol) return null;
+  try {
+    var url = 'https://api.twelvedata.com/time_series?symbol=' + encodeURIComponent(symbol) +
+      '&interval=1h&date=' + date +
+      '&apikey=' + TWELVE_KEY + '&format=JSON&outputsize=24';
+    var resp = await fetch(url);
+    var data = await resp.json();
+
+    if (data.status === 'error' || !data.values || !data.values.length) {
+      var dailyUrl = 'https://api.twelvedata.com/time_series?symbol=' + encodeURIComponent(symbol) +
+        '&interval=1day&start_date=' + date + '&end_date=' + date +
+        '&apikey=' + TWELVE_KEY + '&format=JSON';
+      var dr = await fetch(dailyUrl);
+      var dd = await dr.json();
+      if (dd.status === 'error' || !dd.values || !dd.values.length) return null;
+      var day = dd.values[0];
+      return { o:parseFloat(day.open), h:parseFloat(day.high), l:parseFloat(day.low), c:parseFloat(day.close), live:true, hourly:false };
+    }
+
+    var candles = data.values.reverse();
+    var dayH = -Infinity, dayL = Infinity, dayO = null, dayC = null;
+    candles.forEach(function(c) {
+      var h = parseFloat(c.high), l = parseFloat(c.low);
+      if (h > dayH) dayH = h;
+      if (l < dayL) dayL = l;
+      if (!dayO) dayO = parseFloat(c.open);
+      dayC = parseFloat(c.close);
+    });
+
+    var postH = -Infinity, postL = Infinity;
+    if (signalTime) {
+      var sigHour = parseInt(signalTime.split(':')[0]);
+      candles.forEach(function(c) {
+        var cHour = parseInt(c.datetime.split(' ')[1].split(':')[0]);
+        if (cHour >= sigHour) {
+          var h = parseFloat(c.high), l = parseFloat(c.low);
+          if (h > postH) postH = h;
+          if (l < postL) postL = l;
+        }
+      });
+    }
+
+    return {
+      o:dayO, h:dayH, l:dayL, c:dayC, live:true, hourly:true,
+      postSignalH: postH === -Infinity ? dayH : postH,
+      postSignalL: postL === Infinity  ? dayL  : postL,
+      candles: candles
+    };
+  } catch(e) { return null; }
+}
+
+function clearNew() {
+  ['nEntry','nSL','nTP1','nTP2','nTP3','nTP4','nNotes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('nDate').value = '';
+  document.getElementById('nTime').value = '';
+  document.getElementById('newResults').style.display = 'none';
+}
+
+var currentLogText = '';
+var currentSignalData = null;
+
+async function verifyNew() {
+  const date   = document.getElementById('nDate').value;
+  const time   = document.getElementById('nTime').value;
+  const trader = document.getElementById('nTrader').value;
+  const asset  = document.getElementById('nAsset').value;
+  const dir    = document.getElementById('nDir').value;
+  var cleanNum = function(id) { return parseFloat(String(document.getElementById(id).value).replace(/,/g,'').trim()); };
+  var entry  = cleanNum('nEntry');
+  var sl     = cleanNum('nSL');
+  var tp1    = cleanNum('nTP1');
+  var tp2    = cleanNum('nTP2');
+  var tp3    = cleanNum('nTP3');
+  var tp4    = cleanNum('nTP4');
+  var risk   = document.getElementById('nRisk').value;
+  var notes  = document.getElementById('nNotes').value;
+
+  if (!date || isNaN(entry) || isNaN(sl)) {
+    var missing = [];
+    if (!date) missing.push('date');
+    if (isNaN(entry)) missing.push('entry price (' + document.getElementById('nEntry').value + ')');
+    if (isNaN(sl)) missing.push('stop loss (' + document.getElementById('nSL').value + ')');
+    alert('Please fill in: ' + missing.join(', '));
+    return;
+  }
+
+  document.getElementById('newLoading').style.display = 'block';
+  document.getElementById('newResults').style.display = 'none';
+  document.getElementById('verifyBtn').disabled = true;
+  document.getElementById('newLoadMsg').textContent = 'Fetching ' + asset + ' OHLC for ' + date + '…';
+
+  const ohlc = await fetchOHLC(asset, date, time);
+
+  document.getElementById('newLoading').style.display = 'none';
+  document.getElementById('verifyBtn').disabled = false;
+  document.getElementById('newResults').style.display = 'block';
+
+  // Checks
+  var checks = [], checkTexts = [], passed = 0, total = 0;
+
+  total++;
+  const slOk = dir === 'BUY' ? entry > sl : entry < sl;
+  if (slOk) { passed++; checks.push(checkRow('pass', 'SL correctly placed ' + (dir==='BUY'?'below':'above') + ' entry — ' + fmt(entry) + ' / SL ' + fmt(sl))); }
+  else checks.push(checkRow('fail', 'SL direction error — SL should be ' + (dir==='BUY'?'below':'above') + ' entry'));
+
+  if (!isNaN(tp1)) {
+    total++;
+    const tpOk = dir === 'BUY' ? tp1 > entry : tp1 < entry;
+    if (tpOk) { passed++; checks.push(checkRow('pass', 'TP1 correctly placed ' + (dir==='BUY'?'above':'below') + ' entry (' + fmt(tp1) + ')')); }
+    else checks.push(checkRow('fail', 'TP1 direction error'));
+  }
+
+  if (!isNaN(tp1)) {
+    total++;
+    const rr = Math.abs(tp1 - entry) / Math.abs(entry - sl);
+    if (rr >= 1) { passed++; checks.push(checkRow('pass', 'R/R to TP1: ' + rr.toFixed(2) + ':1 — acceptable')); }
+    else checks.push(checkRow('warn', 'R/R to TP1: ' + rr.toFixed(2) + ':1 — below 1:1'));
+  }
+
+  if (ohlc && ohlc.rateLimited) {
+    checks.push(checkRow('warn', 'Alpha Vantage rate limit reached — try again tomorrow'));
+  } else if (ohlc) {
+    total++;
+    var checkH = ohlc.postSignalH || ohlc.h;
+    var checkL = ohlc.postSignalL || ohlc.l;
+    var reachable = entry >= checkL && entry <= checkH;
+    var timeAware = ohlc.hourly && time;
+    if (reachable) {
+      passed++;
+      checks.push(checkRow('pass', 'Entry ' + fmt(entry) + ' confirmed reachable' +
+        (timeAware ? ' after signal time ' + time + ' (range: ' + fmt(checkL) + ' – ' + fmt(checkH) + ')' :
+        ' within ' + date + ' range (' + fmt(ohlc.l) + ' – ' + fmt(ohlc.h) + ')')));
+    } else {
+      checks.push(checkRow('fail', 'Entry ' + fmt(entry) + ' NOT reached' +
+        (timeAware ? ' after ' + time + ' (post-signal range: ' + fmt(checkL) + ' – ' + fmt(checkH) + ')' :
+        ' on ' + date + ' (range: ' + fmt(ohlc.l) + ' – ' + fmt(ohlc.h) + ')') + ' — possible fabrication'));
+    }
+    var slHit = dir === 'BUY' ? sl >= checkL : sl <= checkH;
+    checks.push(checkRow(slHit ? 'warn' : 'pass',
+      slHit ? 'SL ' + fmt(sl) + ' was reached' + (timeAware ? ' after signal time' : ' on signal date') + ' — trade may have stopped out'
+            : 'SL ' + fmt(sl) + ' was not reached' + (timeAware ? ' after signal time' : ' on signal date') + ' — trade survived'));
+    if (ohlc.hourly) checks.push(checkRow('info', 'Twelve Data: ' + (ohlc.candles ? ohlc.candles.length : 0) + ' hourly candles analysed'));
+  } else {
+    checks.push(checkRow('info', 'No price data for ' + asset + ' on ' + date + ' — verify manually on TradingView'));
+  }
+
+  if (time) { total++; passed++; checks.push(checkRow('pass', 'Telegram timestamp ' + time + ' on ' + date + ' — cannot be backdated')); }
+  if (risk) checks.push(checkRow('warn', 'Risk note: ' + risk + ' — adjust position size accordingly'));
+
+  document.getElementById('newChecks').innerHTML = checks.join('');
+
+  // OHLC table
+  if (ohlc && !ohlc.rateLimited) {
+    var levels = [['Entry',entry],['SL',sl],['TP1',tp1],['TP2',tp2],['TP3',tp3],['TP4',tp4]].filter(function(x){ return !isNaN(x[1]); });
+    document.getElementById('newOHLC').innerHTML = levels.map(function(lv) {
+      var hit = lv[1] >= ohlc.l && lv[1] <= ohlc.h;
+      return '<tr><td class="td-mono">' + lv[0] + '</td><td class="td-mono">' + fmt(lv[1]) + '</td><td class="td-mono">' + fmt(ohlc.l) + '</td><td class="td-mono">' + fmt(ohlc.h) + '</td><td class="' + (hit?'td-green':'td-red') + '">' + (hit?'✓ Reachable':'✗ Outside range') + '</td></tr>';
+    }).join('');
+    document.getElementById('newSource').textContent = 'Source: Twelve Data API — ' + asset + (ohlc.hourly ? ' hourly candles' : ' daily OHLC') + ' for ' + date;
+  } else {
+    document.getElementById('newOHLC').innerHTML = '<tr><td colspan="5" style="color:var(--text2);text-align:center;padding:16px;">' + ('No data from Twelve Data — verify manually on TradingView') + '</td></tr>';
+  }
+
+  // Verdict
+  var score = total > 0 ? passed / total : 0;
+  var vClass, vIcon, vTitle, vSub, statusLabel;
+  if (!ohlc || ohlc.rateLimited) {
+    vClass='warn'; vIcon='⚠'; vTitle='Unaudited — price data unavailable';
+    vSub='Structure valid but entry unconfirmed. Log as Unaudited.'; statusLabel='UNAUDITED';
+  } else if (score >= 0.75) {
+    vClass='pass'; vIcon='✓'; vTitle='Verified — signal appears legitimate';
+    vSub='Entry confirmed reachable. Safe to log as Verified.'; statusLabel='VERIFIED';
+  } else {
+    vClass='fail'; vIcon='✗'; vTitle='Failed — possible fabrication';
+    vSub='Entry not reachable on signal date.'; statusLabel='FAILED';
+  }
+
+  var vColors  = { pass:'var(--green)', fail:'var(--red)', warn:'var(--amber)' };
+  var vBgs     = { pass:'var(--green-dim)', fail:'var(--red-dim)', warn:'var(--amber-dim)' };
+  var vBorders = { pass:'var(--green-border)', fail:'var(--red-border)', warn:'var(--amber-border)' };
+
+  // Build failed checks detail
+  var failedChecks = checks.filter(function(c){ return c.indexOf('✗') !== -1; });
+  var failDetail = '';
+  if (vClass === 'fail' && failedChecks.length) {
+    failDetail = '<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,77,109,0.2);">' +
+      '<div style="font-family:var(--mono);font-size:11px;color:var(--red);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.08em;">Failed checks:</div>' +
+      failedChecks.map(function(c){
+        return '<div style="font-family:var(--mono);font-size:11px;color:var(--text2);margin-bottom:4px;padding-left:8px;border-left:2px solid var(--red-border);">' + c.replace('✗','').trim() + '</div>';
+      }).join('') +
+    '</div>';
+  }
+
+  document.getElementById('newVerdict').innerHTML =
+    '<div style="background:' + vBgs[vClass] + ';border:1px solid ' + vBorders[vClass] + ';border-radius:10px;padding:20px 22px;margin-bottom:1rem;">' +
+    '<div style="display:flex;align-items:flex-start;gap:16px;">' +
+    '<div style="font-size:22px;color:' + vColors[vClass] + ';flex-shrink:0;">' + vIcon + '</div>' +
+    '<div style="flex:1;"><div style="font-size:15px;font-weight:700;color:' + vColors[vClass] + ';margin-bottom:4px;">' + vTitle + '</div>' +
+    '<div style="font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.5;">' + vSub + '</div>' +
+    failDetail +
+    '</div></div></div>';
+
+  // Log entry
+  var tpStr = [tp1,tp2,tp3,tp4].filter(function(v){ return !isNaN(v); }).map(fmt).join(' / ') || '—';
+  var allNotes = [risk, notes].filter(Boolean).join('. ');
+  var displayDate = date ? date.split('-').reverse().join('/') : '—';
+
+  // Store signal data for sheet save
+  currentSignalData = {
+    date: displayDate,
+    time: time || '',
+    trader: trader,
+    asset: asset,
+    direction: dir,
+    entry: isNaN(entry) ? '' : entry,
+    sl: isNaN(sl) ? '' : sl,
+    tp1: isNaN(tp1) ? '' : tp1,
+    tp2: isNaN(tp2) ? '' : tp2,
+    tp3: isNaN(tp3) ? '' : tp3,
+    tp4: isNaN(tp4) ? '' : tp4,
+    outcome: 'OPEN',
+    close_price: '',
+    verified: statusLabel,
+    notes: allNotes || '',
+    channel: document.getElementById('nChannel').value || ''
+  };
+
+  // Reset save button
+  var saveBtn = document.getElementById('saveBtn');
+  if (saveBtn) {
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Save to Google Sheet';
+    saveBtn.style.background = '';
+  }
+  var saveStatus = document.getElementById('saveStatus');
+  if (saveStatus) saveStatus.style.display = 'none';
+
+  currentLogText = [
+    'Date: ' + displayDate,
+    'Time: ' + (time || '—'),
+    'Trader: ' + trader,
+    'Asset: ' + asset,
+    'Direction: ' + dir,
+    'Entry: ' + fmt(entry),
+    'SL: ' + fmt(sl),
+    'TPs: ' + tpStr,
+    'Outcome: OPEN',
+    'Verified: ' + statusLabel,
+    'Channel: ' + (document.getElementById('nChannel').value || '—'),
+    'Notes: ' + (allNotes || '—'),
+  ].join('\n');
+
+  document.getElementById('logEntry').innerHTML = [
+    logRow('Date', displayDate),
+    logRow('Time', time || '—'),
+    logRow('Trader', trader),
+    logRow('Asset', asset),
+    logRow('Direction', '<span class="badge badge-' + dir.toLowerCase() + '">' + dir + '</span>'),
+    logRow('Entry', fmt(entry)),
+    logRow('Stop loss', fmt(sl)),
+    logRow('TPs', tpStr),
+    logRow('Outcome', 'OPEN'),
+    logRow('Verified', '<span class="badge badge-' + statusLabel.toLowerCase() + '">' + statusLabel + '</span>'),
+    logRow('Channel', document.getElementById('nChannel').value || '—'),
+    logRow('Notes', allNotes || '—'),
+  ].join('');
+
+  document.getElementById('newResults').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function addToProviderList(val) {
+  if (!val || val.trim() === '') return;
+  var dl = document.getElementById('traderList');
+  if (!dl) return;
+  var existing = Array.from(dl.options).map(o => o.value);
+  if (existing.indexOf(val.trim()) === -1) {
+    var opt = document.createElement('option');
+    opt.value = val.trim();
+    dl.appendChild(opt);
+    // Save to localStorage for persistence
+    try {
+      var providers = JSON.parse(localStorage.getItem('signalscore_providers') || '[]');
+      if (providers.indexOf(val.trim()) === -1) {
+        providers.push(val.trim());
+        localStorage.setItem('signalscore_providers', JSON.stringify(providers));
+      }
+    } catch(e) {}
+  }
+}
+
+// Load saved providers on page load
+(function() {
+  try {
+    var providers = JSON.parse(localStorage.getItem('signalscore_providers') || '[]');
+    var dl = document.getElementById('traderList');
+    if (dl && providers.length) {
+      providers.forEach(function(p) {
+        var existing = Array.from(dl.options).map(o => o.value);
+        if (existing.indexOf(p) === -1) {
+          var opt = document.createElement('option');
+          opt.value = p;
+          dl.appendChild(opt);
+        }
+      });
+    }
+  } catch(e) {}
+})();
+
+async function saveAndVerify() {
+  // First save the signal as Pending
+  await quickSave();
+  // Then run verification
+  await verifyNew();
+}
+
+function quickSave() {
+  var date    = document.getElementById('nDate').value;
+  var time    = document.getElementById('nTime').value;
+  var trader  = document.getElementById('nTrader').value;
+  var channel = document.getElementById('nChannel') ? document.getElementById('nChannel').value : '';
+  var asset   = document.getElementById('nAsset').value;
+  var dir     = document.getElementById('nDir').value;
+  var cleanNum = function(id) { 
+    var val = document.getElementById(id).value;
+    return val ? parseFloat(String(val).replace(/,/g,'').trim()) : NaN;
+  };
+  var entry = cleanNum('nEntry');
+  var sl    = cleanNum('nSL');
+  var tp1   = cleanNum('nTP1');
+  var tp2   = cleanNum('nTP2');
+  var tp3   = cleanNum('nTP3');
+  var tp4   = cleanNum('nTP4');
+  var risk  = document.getElementById('nRisk').value;
+  var notes = document.getElementById('nNotes').value;
+
+  if (!date || isNaN(entry) || isNaN(sl)) {
+    var missing = [];
+    if (!date) missing.push('date');
+    if (isNaN(entry)) missing.push('entry price');
+    if (isNaN(sl)) missing.push('stop loss');
+    alert('Please fill in: ' + missing.join(', '));
+    return Promise.reject('missing fields');
+  }
+
+  var allNotes = [risk, notes].filter(Boolean).join('. ');
+  var displayDate = date.split('-').reverse().join('/');
+
+  currentSignalData = {
+    date:        displayDate,
+    time:        time || '',
+    trader:      trader,
+    channel:     channel,
+    asset:       asset,
+    direction:   dir,
+    entry:       isNaN(entry) ? '' : entry,
+    sl:          isNaN(sl)    ? '' : sl,
+    tp1:         isNaN(tp1)   ? '' : tp1,
+    tp2:         isNaN(tp2)   ? '' : tp2,
+    tp3:         isNaN(tp3)   ? '' : tp3,
+    tp4:         isNaN(tp4)   ? '' : tp4,
+    outcome:     'OPEN',
+    close_price: '',
+    verified:    'Pending',
+    notes:       allNotes || ''
+  };
+
+  // Handle edit mode
+  if (window._editSignalId) {
+    currentSignalData.signalId    = window._editSignalId;
+    currentSignalData.outcome     = document.getElementById('eOutcome')    ? document.getElementById('eOutcome').value    : 'OPEN';
+    currentSignalData.close_price = document.getElementById('eClosePrice') ? document.getElementById('eClosePrice').value : '';
+    currentSignalData.verified    = document.getElementById('eVerified')   ? document.getElementById('eVerified').value   : 'Pending';
+    currentSignalData.editReason  = 'Signal updated';
+  }
+
+  return saveToSheet();
+}
+
+function saveDirectToSheet() {
+  var date    = document.getElementById('nDate').value;
+  var time    = document.getElementById('nTime').value;
+  var trader  = document.getElementById('nTrader').value;
+  var channel = document.getElementById('nChannel') ? document.getElementById('nChannel').value : '';
+  var asset   = document.getElementById('nAsset').value;
+  var dir     = document.getElementById('nDir').value;
+  var cleanNum = function(id) { return parseFloat(String(document.getElementById(id).value).replace(/,/g,'').trim()); };
+  var entry   = cleanNum('nEntry');
+  var sl      = cleanNum('nSL');
+  var tp1     = cleanNum('nTP1');
+  var tp2     = cleanNum('nTP2');
+  var tp3     = cleanNum('nTP3');
+  var tp4     = cleanNum('nTP4');
+  var risk    = document.getElementById('nRisk').value;
+  var notes   = document.getElementById('nNotes').value;
+
+  if (!date || isNaN(entry) || isNaN(sl)) {
+    alert('Please fill in at least: date, entry price and stop loss');
+    return;
+  }
+
+  var allNotes = [risk, notes].filter(Boolean).join('. ');
+  var displayDate = date ? date.split('-').reverse().join('/') : '';
+
+  currentSignalData = {
+    date: displayDate,
+    time: time || '',
+    trader: trader,
+    channel: channel,
+    asset: asset,
+    direction: dir,
+    entry: isNaN(entry) ? '' : entry,
+    sl: isNaN(sl) ? '' : sl,
+    tp1: isNaN(tp1) ? '' : tp1,
+    tp2: isNaN(tp2) ? '' : tp2,
+    tp3: isNaN(tp3) ? '' : tp3,
+    tp4: isNaN(tp4) ? '' : tp4,
+    outcome: 'OPEN',
+    close_price: '',
+    verified: 'Pending',
+    notes: allNotes || ''
+  };
+
+  // Add edit ID if in edit mode
+  if (window._editSignalId) {
+    currentSignalData.signalId    = window._editSignalId;
+    currentSignalData.outcome     = document.getElementById('eOutcome')    ? document.getElementById('eOutcome').value    : 'OPEN';
+    currentSignalData.close_price = document.getElementById('eClosePrice') ? document.getElementById('eClosePrice').value : '';
+    currentSignalData.verified    = document.getElementById('eVerified')   ? document.getElementById('eVerified').value   : 'Pending';
+    currentSignalData.editReason  = 'Signal saved without verification';
+  }
+
+  // Show results section with save button
+  document.getElementById('newResults').style.display = 'block';
+  document.getElementById('newVerdict').innerHTML = '<div style="background:var(--blue-dim);border:1px solid rgba(77,159,255,0.25);border-radius:10px;padding:16px 20px;font-family:var(--mono);font-size:13px;color:var(--blue);">ℹ Saving without verification — signal will be marked as Pending</div>';
+  document.getElementById('newChecks').innerHTML = '';
+  document.getElementById('newOHLC').innerHTML = '<tr><td colspan="5" style="color:var(--text2);text-align:center;padding:12px;">No verification performed</td></tr>';
+
+  saveToSheet();
+}
+
+function openTV() {
+  var asset = document.getElementById('nAsset').value;
+  var tvSymbols = {
+    'XAU/USD':'OANDA:XAUUSD','EUR/USD':'FX:EURUSD','GBP/USD':'FX:GBPUSD',
+    'USD/JPY':'FX:USDJPY','GBP/JPY':'FX:GBPJPY','EUR/JPY':'FX:EURJPY',
+    'AUD/USD':'FX:AUDUSD','US30':'DJ:DJI','NAS100':'NASDAQ:NDX'
+  };
+  var symbol = tvSymbols[asset] || asset.replace('/','');
+  window.open('https://www.tradingview.com/chart/?symbol=' + encodeURIComponent(symbol) + '&interval=60', '_blank');
+}
+
+function copyLog() {
+  navigator.clipboard.writeText(currentLogText).then(function() {
+    alert('Log entry copied to clipboard!');
+  });
+}
+
+async function saveToSheet() {
+  if (!currentSignalData) {
+    alert('No signal data to save. Please verify a signal first.');
+    return;
+  }
+
+  var btn = document.getElementById('saveBtn');
+  var status = document.getElementById('saveStatus');
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+  status.style.display = 'block';
+  status.style.color = 'var(--text2)';
+  status.textContent = 'Writing to Google Sheet...';
+
+  try {
+    // Add edit ID if in edit mode
+    if (window._editSignalId) {
+      currentSignalData.signalId    = window._editSignalId;
+      currentSignalData.outcome     = document.getElementById('eOutcome')     ? document.getElementById('eOutcome').value     : window._editOutcome;
+      currentSignalData.close_price = document.getElementById('eClosePrice')  ? document.getElementById('eClosePrice').value  : window._editClosePrice;
+      currentSignalData.verified    = document.getElementById('eVerified')    ? document.getElementById('eVerified').value    : window._editVerified;
+      currentSignalData.editReason  = 'Signal edited via admin';
+    }
+
+    var payload = encodeURIComponent(JSON.stringify(currentSignalData));
+    var url = APPS_SCRIPT_URL + '?payload=' + payload;
+
+    var response = await fetch(url);
+    var result = await response.json();
+
+    if (result.status === 'success') {
+      var isEdit = result.action === 'updated';
+      btn.textContent = isEdit ? '✓ Signal updated' : '✓ Saved to Sheet';
+      btn.style.background = 'var(--green)';
+      status.style.color = 'var(--green)';
+      status.textContent = isEdit
+        ? 'Signal #' + result.id + ' updated in sheet — go back to signal log to verify'
+        : 'Signal saved as row ' + result.row + ' (ID: ' + result.id + ') — refresh Signal Log to see it';
+
+      // Add back to log button if edit
+      if (isEdit) {
+        var backBtn = document.createElement('a');
+        backBtn.href = 'signal-log.html';
+        backBtn.className = 'btn btn-outline';
+        backBtn.style.cssText = 'margin-top:10px;display:block;text-align:center;font-size:12px;';
+        backBtn.textContent = '← Back to signal log';
+        document.getElementById('saveStatus').after(backBtn);
+      }
+    } else {
+      throw new Error(result.message || 'Unknown error');
+    }
+
+  } catch(err) {
+    btn.disabled = false;
+    btn.textContent = 'Save to Google Sheet';
+    status.style.color = 'var(--red)';
+    status.textContent = 'Save failed: ' + err.message + ' — use Copy to clipboard instead';
+    console.error('Save error:', err);
+  }
+}
+
+var currentUpdateText = '';
+
+function generateUpdate() {
+  const id      = document.getElementById('uID').value;
+  const trader  = document.getElementById('uTrader').value;
+  const date    = document.getElementById('uDate').value;
+  const time    = document.getElementById('uTime').value;
+  const type    = document.getElementById('uType').value;
+  const newSL   = document.getElementById('uNewSL').value;
+  const close   = document.getElementById('uClosePrice').value;
+  const raw     = document.getElementById('uRaw').value;
+  const notes   = document.getElementById('uNotes').value;
+
+  if (!id || !type) { alert('Please enter the signal ID and select an update type.'); return; }
+
+  const displayDate = date ? date.split('-').reverse().join('/') : '—';
+  const displayTime = time || '—';
+
+  var noteText = '[' + displayDate + ' ' + displayTime + '] ' + type;
+  if (newSL) noteText += ' → new SL: ' + newSL;
+  if (close) noteText += ' @ ' + close;
+  if (notes) noteText += '. ' + notes;
+  if (raw)   noteText += ' (raw: "' + raw.replace(/\n/g, ' ') + '")';
+
+  currentUpdateText = noteText;
+
+  var sheetActions = {
+    'SL to breakeven':          'Add note to signal #' + id + '. No outcome change. SL column unchanged (original SL preserved).',
+    'SL to TP1':                'Add note to signal #' + id + '. No outcome change.',
+    'SL to TP2':                'Add note to signal #' + id + '. No outcome change.',
+    'SL to TP3':                'Add note to signal #' + id + '. No outcome change.',
+    'Custom SL move':           'Add note to signal #' + id + '. No outcome change.',
+    'Partial close at TP1':     'Add note to signal #' + id + '. Outcome stays OPEN until fully closed.',
+    'Partial close at TP2':     'Add note to signal #' + id + '. Outcome stays OPEN until fully closed.',
+    'Partial close at TP3':     'Add note to signal #' + id + '. Outcome stays OPEN until fully closed.',
+    'Closed at TP1':            'Update signal #' + id + ' Outcome → TP1. Close Price → ' + (close||'?') + '. Calculate R multiple.',
+    'Closed at TP2':            'Update signal #' + id + ' Outcome → TP2. Close Price → ' + (close||'?') + '. Calculate R multiple.',
+    'Closed at TP3':            'Update signal #' + id + ' Outcome → TP3. Close Price → ' + (close||'?') + '. Calculate R multiple.',
+    'Closed at TP4':            'Update signal #' + id + ' Outcome → TP4. Close Price → ' + (close||'?') + '. Calculate R multiple.',
+    'Stopped out (SL hit)':     'Update signal #' + id + ' Outcome → SL. Close Price → ' + (close||'?') + '. R = -1.0.',
+    'Closed manually':          'Update signal #' + id + ' Outcome → CLOSED. Close Price → ' + (close||'?') + '. Calculate R multiple.',
+    'Cancelled before entry':   'Update signal #' + id + ' Outcome → CANCELLED. Delete or zero out R multiple.',
+    'Risk reduced to half':     'Add note to signal #' + id + '. Consider splitting into separate row if tracking position size.',
+    'Risk reduced to quarter':  'Add note to signal #' + id + '. Consider splitting into separate row if tracking position size.',
+  };
+
+  document.getElementById('updateNote').textContent = noteText;
+  document.getElementById('sheetAction').innerHTML =
+    '<div style="padding:10px; background:var(--surface); border-radius:6px; border:1px solid var(--border);">' +
+    '<p style="margin-bottom:6px; color:var(--amber); font-weight:700;">What to do in your spreadsheet:</p>' +
+    '<p>' + (sheetActions[type] || 'Add note to signal #' + id) + '</p></div>';
+
+  document.getElementById('updateResult').style.display = 'block';
+  document.getElementById('updateResult').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function copyUpdate() {
+  navigator.clipboard.writeText(currentUpdateText).then(function() {
+    alert('Update note copied to clipboard!');
+  });
+}
+</script>
+</body>
+</html>

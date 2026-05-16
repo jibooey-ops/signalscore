@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signal Verifier — SignalScore</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="nav-placeholder"></div>
+<div class="page-wrap">
+  <div class="container-sm">
+
+    <div style="margin-bottom: 2.5rem;">
+      <div class="page-tag">Independent verification tool</div>
+      <h1>Signal <span class="accent">Verifier</span></h1>
+      <p class="lead">Paste any Telegram signal. We check every price level against real historical market data — not screenshots, not claims.</p>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Raw Telegram signal</label>
+      <textarea id="rawSignal" rows="7" placeholder="Paste the signal exactly as it appeared in Telegram — emojis, comments and all.
+
+Example:
+XAUUSD Buy now
+Enter 4716
+SL 4695
+TP1 4721
+TP2 4730
+TP3 4746
+TP4 4800"></textarea>
+    </div>
+
+    <div class="grid3" style="margin-bottom:1rem;">
+      <div class="form-group">
+        <label class="form-label">Signal date</label>
+        <input type="date" id="sigDate" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Signal time</label>
+        <input type="time" id="sigTime" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Trader</label>
+        <input type="text" id="traderSel" placeholder="e.g. Fred, Anders..."
+          autocomplete="off" list="traderListV" />
+        <datalist id="traderListV">
+          <option value="Fred">
+          <option value="Anders">
+          <option value="FredTrading VIP">
+          <option value="AndersTrading">
+        </datalist>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Asset override (if auto-detect fails)</label>
+      <select id="assetOverride">
+        <option value="">Auto-detect from signal</option>
+        <option value="XAU/USD">XAU/USD — Gold</option>
+        <option value="EUR/USD">EUR/USD</option>
+        <option value="GBP/USD">GBP/USD</option>
+        <option value="USD/JPY">USD/JPY</option>
+        <option value="GBP/JPY">GBP/JPY</option>
+        <option value="EUR/JPY">EUR/JPY</option>
+        <option value="US30">US30 — Dow Jones</option>
+        <option value="NAS100">NAS100 — Nasdaq</option>
+      </select>
+    </div>
+
+    <details style="margin-bottom:1rem;">
+      <summary style="font-family:var(--mono); font-size:12px; color:var(--text2); cursor:pointer; padding:8px 0; border-top:1px solid var(--border); border-bottom:1px solid var(--border); letter-spacing:0.05em;">
+        MANUAL OVERRIDE — enter values if auto-parse misses them
+      </summary>
+      <div style="padding:1rem 0;">
+        <div class="grid3" style="margin-bottom:10px;">
+          <div class="form-group">
+            <label class="form-label">Entry price</label>
+            <input type="number" id="manEntry" placeholder="e.g. 4716" step="0.00001" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Stop loss</label>
+            <input type="number" id="manSL" placeholder="e.g. 4695" step="0.00001" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Direction</label>
+            <select id="manDir">
+              <option value="">Auto-detect</option>
+              <option value="BUY">BUY</option>
+              <option value="SELL">SELL</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid4">
+          <div class="form-group">
+            <label class="form-label">TP1</label>
+            <input type="number" id="manTP1" placeholder="TP1" step="0.00001" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">TP2</label>
+            <input type="number" id="manTP2" placeholder="TP2" step="0.00001" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">TP3</label>
+            <input type="number" id="manTP3" placeholder="TP3" step="0.00001" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">TP4</label>
+            <input type="number" id="manTP4" placeholder="TP4" step="0.00001" />
+          </div>
+        </div>
+        <p style="font-family:var(--mono); font-size:11px; color:var(--text2);">Manual values override auto-parsed values where filled in.</p>
+      </div>
+    </details>
+
+    <div style="display:flex; gap:10px; margin-bottom:2rem;">
+      <button class="btn btn-primary" onclick="parseAndVerify()" id="verifyBtn" style="flex:1;">Verify signal</button>
+      <button class="btn btn-outline" onclick="loadExample()">Load example</button>
+      <button class="btn btn-outline" onclick="clearAll()">Clear</button>
+    </div>
+
+    <div id="loadingBox" style="display:none; margin-bottom:1.5rem;">
+      <div class="card-sm" style="display:flex; align-items:center; gap:14px;">
+        <div class="spinner"></div>
+        <span style="font-family:var(--mono); font-size:13px; color:var(--text2);" id="loadingMsg">Fetching price data...</span>
+      </div>
+    </div>
+
+    <div id="results" style="display:none;">
+
+      <div id="verdictBox" style="margin-bottom:1.5rem;"></div>
+
+      <div class="card-sm" style="margin-bottom:1rem;">
+        <div class="section-label" style="margin-bottom:1rem;">Parsed signal</div>
+        <div id="parsedBadges" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:1rem;"></div>
+        <div id="parsedLevels"></div>
+      </div>
+
+      <div class="card-sm" style="margin-bottom:1rem;">
+        <div class="section-label" style="margin-bottom:1rem;">Verification checks</div>
+        <div id="checkList"></div>
+      </div>
+
+      <div class="card-sm" style="margin-bottom:1rem;">
+        <div class="section-label" style="margin-bottom:1rem;">Price levels vs historical OHLC</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Level</th><th>Signal price</th><th>Day low</th><th>Day high</th><th>Status</th></tr></thead>
+            <tbody id="ohlcTable"></tbody>
+          </table>
+        </div>
+        <p style="font-family:var(--mono); font-size:11px; color:var(--text2); margin-top:10px;" id="dataSource"></p>
+      </div>
+
+      <div class="card-sm" style="margin-bottom:1rem;">
+        <div class="section-label" style="margin-bottom:1rem;">Verification record</div>
+        <div id="verRecord"></div>
+      </div>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a href="signal-log.html" class="btn btn-outline" style="flex:1; justify-content:center;">Log to signal tracker →</a>
+        <button class="btn btn-outline" onclick="openTradingView()" style="flex:1;">View on TradingView ↗</button>
+        <button class="btn btn-outline" onclick="window.print()" style="flex:1;">Export report</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+<div id="footer-placeholder"></div>
+<script src="js/nav.js"></script>
+<script>
+renderNav('verifier');
+renderFooter();
+
+const TWELVE_KEY = 'd2864f2dd0f04053bc6f006fc26fb7e9';
+
+const assetMap = {
+  'XAU/USD': 'XAU/USD',
+  'EUR/USD': 'EUR/USD',
+  'GBP/USD': 'GBP/USD',
+  'USD/JPY': 'USD/JPY',
+  'GBP/JPY': 'GBP/JPY',
+  'EUR/JPY': 'EUR/JPY',
+  'AUD/USD': 'AUD/USD',
+  'US30':    'DJI',
+  'NAS100':  'NDX',
+};
+
+function loadExample() {
+  document.getElementById('rawSignal').value = `XAUUSD Buy now\nEnter 4716\nSL 4695\nTP1 4721\nTP2 4730\nTP3 4746\nTP4 4800\n\nHalf risk please`;
+  document.getElementById('sigDate').value = '2025-05-08';
+  document.getElementById('sigTime').value = '12:57';
+  document.getElementById('traderSel').value = 'Fred';
+}
+
+function clearAll() {
+  document.getElementById('rawSignal').value = '';
+  document.getElementById('sigDate').value = '';
+  document.getElementById('sigTime').value = '';
+  ['manEntry','manSL','manTP1','manTP2','manTP3','manTP4'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('manDir').value = '';
+  document.getElementById('results').style.display = 'none';
+}
+
+function lastNum(line) {
+  const nums = line.match(/\d+\.?\d*/g);
+  if (!nums) return null;
+  return parseFloat(nums[nums.length - 1]);
+}
+
+function parseSignal(raw) {
+  const text = raw.toUpperCase();
+  const r = { asset:null, dir:null, entry:null, sl:null, tp1:null, tp2:null, tp3:null, tp4:null };
+
+  const assets = ['XAU/USD','XAUUSD','EUR/USD','EURUSD','GBP/USD','GBPUSD','USD/JPY','USDJPY','GBP/JPY','GBPJPY','EUR/JPY','EURJPY','NAS100','US30'];
+  const norm = { 'XAUUSD':'XAU/USD','EURUSD':'EUR/USD','GBPUSD':'GBP/USD','USDJPY':'USD/JPY','GBPJPY':'GBP/JPY','EURJPY':'EUR/JPY' };
+  for (const a of assets) { if (text.includes(a)) { r.asset = norm[a]||a; break; } }
+
+  if (text.includes('BUY')||text.includes('LONG')) r.dir='BUY';
+  else if (text.includes('SELL')||text.includes('SHORT')) r.dir='SELL';
+
+  for (const line of raw.split('\n')) {
+    const lu = line.toUpperCase().trim();
+    const n = lastNum(line);
+    if (n === null) continue;
+    if      (lu.match(/^ENTER\b|^ENTRY\b|^PRICE\b|^EP\b/))           r.entry = n;
+    else if (lu.match(/^SL\b|^STOP LOSS\b|^STOP\b/) && n > 10)        r.sl    = n;
+    else if (lu.match(/^TP\s*4\b|^TP4\b|^TP4\s*:/))                   r.tp4   = n;
+    else if (lu.match(/^TP\s*3\b|^TP3\b|^TP3\s*:/))                   r.tp3   = n;
+    else if (lu.match(/^TP\s*2\b|^TP2\b|^TP2\s*:/))                   r.tp2   = n;
+    else if (lu.match(/^TP\s*1\b|^TP1\b|^TP1\s*:|^TARGET\b/))         r.tp1   = n;
+  }
+
+  const mv = id => { const v = parseFloat(document.getElementById(id).value); return isNaN(v) ? null : v; };
+  if (mv('manEntry')) r.entry = mv('manEntry');
+  if (mv('manSL'))    r.sl    = mv('manSL');
+  const md = document.getElementById('manDir').value;
+  if (md) r.dir = md;
+  if (mv('manTP1'))   r.tp1   = mv('manTP1');
+  if (mv('manTP2'))   r.tp2   = mv('manTP2');
+  if (mv('manTP3'))   r.tp3   = mv('manTP3');
+  if (mv('manTP4'))   r.tp4   = mv('manTP4');
+
+  return r;
+}
+
+async function fetchOHLC(asset, date, signalTime) {
+  const symbol = assetMap[asset];
+  if (!symbol) return null;
+
+  try {
+    // Fetch hourly candles for that date — gives us time-aware verification
+    const url = 'https://api.twelvedata.com/time_series?symbol=' + encodeURIComponent(symbol) +
+      '&interval=1h&date=' + date +
+      '&apikey=' + TWELVE_KEY +
+      '&format=JSON&outputsize=24';
+
+    const resp = await fetch(url);
+    const data = await resp.json();
+
+    if (data.status === 'error' || !data.values || !data.values.length) {
+      // Fallback to daily if hourly fails
+      const dailyUrl = 'https://api.twelvedata.com/time_series?symbol=' + encodeURIComponent(symbol) +
+        '&interval=1day&start_date=' + date + '&end_date=' + date +
+        '&apikey=' + TWELVE_KEY + '&format=JSON';
+      const dr = await fetch(dailyUrl);
+      const dd = await dr.json();
+      if (dd.status === 'error' || !dd.values || !dd.values.length) return null;
+      const day = dd.values[0];
+      return {
+        o: parseFloat(day.open),
+        h: parseFloat(day.high),
+        l: parseFloat(day.low),
+        c: parseFloat(day.close),
+        live: true,
+        hourly: false,
+        candles: null
+      };
+    }
+
+    // Build full day OHLC from hourly candles
+    const candles = data.values.reverse(); // oldest first
+    let dayH = -Infinity, dayL = Infinity, dayO = null, dayC = null;
+    candles.forEach(function(c) {
+      const h = parseFloat(c.high);
+      const l = parseFloat(c.low);
+      if (h > dayH) dayH = h;
+      if (l < dayL) dayL = l;
+      if (!dayO) dayO = parseFloat(c.open);
+      dayC = parseFloat(c.close);
+    });
+
+    // Find candles AFTER signal time for time-aware check
+    let postSignalH = -Infinity, postSignalL = Infinity;
+    let firstEntryTime = null;
+    if (signalTime) {
+      const sigHour = parseInt(signalTime.split(':')[0]);
+      candles.forEach(function(c) {
+        const cHour = parseInt(c.datetime.split(' ')[1].split(':')[0]);
+        if (cHour >= sigHour) {
+          const h = parseFloat(c.high);
+          const l = parseFloat(c.low);
+          if (h > postSignalH) postSignalH = h;
+          if (l < postSignalL) postSignalL = l;
+        }
+      });
+    }
+
+    return {
+      o: dayO, h: dayH, l: dayL, c: dayC,
+      live: true, hourly: true,
+      postSignalH: postSignalH === -Infinity ? dayH : postSignalH,
+      postSignalL: postSignalL === Infinity  ? dayL  : postSignalL,
+      candles: candles
+    };
+
+  } catch(e) {
+    console.error('Twelve Data error:', e);
+    return null;
+  }
+}
+
+function fmt(n) {
+  if (n===null||n===undefined) return '—';
+  return n < 10 ? n.toFixed(5) : n.toFixed(2);
+}
+
+function recRow(label, value) {
+  return `<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border); font-size:13px;">
+    <span style="font-family:var(--mono); font-size:12px; color:var(--text2);">${label}</span>
+    <span style="font-family:var(--mono); font-weight:700;">${value}</span>
+  </div>`;
+}
+
+function checkItem(cls, text) {
+  const icons  = { pass:'✓', fail:'✗', warn:'⚠', info:'ℹ' };
+  const colors = { pass:'var(--green)', fail:'var(--red)', warn:'var(--amber)', info:'var(--blue)' };
+  return `<div style="display:flex; align-items:flex-start; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); font-size:13px; line-height:1.5;">
+    <span style="font-size:15px; width:20px; text-align:center; flex-shrink:0; color:${colors[cls]};">${icons[cls]}</span>
+    <span>${text}</span>
+  </div>`;
+}
+
+async function parseAndVerify() {
+  const raw    = document.getElementById('rawSignal').value.trim();
+  const date   = document.getElementById('sigDate').value;
+  const time   = document.getElementById('sigTime').value;
+  const trader = document.getElementById('traderSel').value;
+  const override = document.getElementById('assetOverride').value;
+  if (!raw||!date) { alert('Please paste a signal and select the date.'); return; }
+
+  const p = parseSignal(raw);
+  if (override) p.asset = override;
+
+  document.getElementById('loadingBox').style.display = 'block';
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('verifyBtn').disabled = true;
+  document.getElementById('loadingMsg').textContent = 'Fetching ' + (p.asset||'asset') + ' hourly data for ' + date + ' from Twelve Data…';
+
+  const ohlc = p.asset ? await fetchOHLC(p.asset, date, time) : null;
+
+  document.getElementById('loadingBox').style.display = 'none';
+  document.getElementById('verifyBtn').disabled = false;
+  document.getElementById('results').style.display = 'block';
+
+  let badges = '';
+  if (p.dir)    badges += `<span class="badge badge-${p.dir.toLowerCase()}">${p.dir}</span>`;
+  if (p.asset)  badges += `<span class="badge badge-open">${p.asset}</span>`;
+  if (!p.entry) badges += `<span class="badge badge-unaudited">⚠ Entry not found</span>`;
+  if (!p.sl)    badges += `<span class="badge badge-unaudited">⚠ SL not found</span>`;
+  document.getElementById('parsedBadges').innerHTML = badges;
+
+  document.getElementById('parsedLevels').innerHTML = [
+    ['Entry',p.entry],['Stop loss',p.sl],
+    ['TP1',p.tp1],['TP2',p.tp2],['TP3',p.tp3],['TP4',p.tp4]
+  ].filter(([,v])=>v!==null).map(([k,v])=>`
+    <div style="display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid var(--border); font-size:13px;">
+      <span style="color:var(--text2); font-family:var(--mono); font-size:12px;">${k}</span>
+      <span style="font-family:var(--mono); font-weight:700;">${fmt(v)}</span>
+    </div>`).join('');
+
+  let checks = [], passed = 0, total = 0;
+
+  if (!p.entry||!p.sl||!p.dir)
+    checks.push(checkItem('warn','Signal not fully parsed — use manual override fields above if needed'));
+
+  if (p.entry&&p.sl) {
+    total++;
+    const ok = p.dir==='BUY' ? p.entry>p.sl : p.entry<p.sl;
+    if (ok) { passed++; checks.push(checkItem('pass',`SL correctly placed ${p.dir==='BUY'?'below':'above'} entry — ${fmt(p.entry)} entry / ${fmt(p.sl)} SL`)); }
+    else checks.push(checkItem('fail',`SL direction error — SL ${fmt(p.sl)} should be ${p.dir==='BUY'?'below':'above'} entry ${fmt(p.entry)}`));
+  }
+
+  if (p.entry&&p.tp1) {
+    total++;
+    const ok = p.dir==='BUY' ? p.tp1>p.entry : p.tp1<p.entry;
+    if (ok) { passed++; checks.push(checkItem('pass',`TP1 correctly placed ${p.dir==='BUY'?'above':'below'} entry (${fmt(p.tp1)})`)); }
+    else checks.push(checkItem('fail',`TP1 direction error — ${fmt(p.tp1)} should be ${p.dir==='BUY'?'above':'below'} entry`));
+  }
+
+  if (p.entry&&p.sl&&p.tp1) {
+    total++;
+    const rr = Math.abs(p.tp1-p.entry)/Math.abs(p.entry-p.sl);
+    if (rr>=1) { passed++; checks.push(checkItem('pass',`R/R to TP1: ${rr.toFixed(2)}:1 — acceptable`)); }
+    else checks.push(checkItem('warn',`R/R to TP1: ${rr.toFixed(2)}:1 — below 1:1 minimum`));
+  }
+
+  if (ohlc&&ohlc.error) {
+    checks.push(checkItem('warn','Twelve Data could not return price data for this asset/date — verify manually on TradingView'));
+  } else if (ohlc&&p.entry) {
+    total++;
+    // Use post-signal range if available (time-aware), else full day
+    const checkH = ohlc.postSignalH || ohlc.h;
+    const checkL = ohlc.postSignalL || ohlc.l;
+    const reachable = p.entry >= checkL && p.entry <= checkH;
+    const timeAware = ohlc.hourly && time;
+
+    if (reachable) {
+      passed++;
+      if (timeAware) {
+        checks.push(checkItem('pass','Entry ' + fmt(p.entry) + ' confirmed reachable AFTER signal time ' + time + ' (post-signal range: ' + fmt(checkL) + ' – ' + fmt(checkH) + ')'));
+      } else {
+        checks.push(checkItem('pass','Entry ' + fmt(p.entry) + ' confirmed within ' + date + ' range (' + fmt(ohlc.l) + ' – ' + fmt(ohlc.h) + ')'));
+      }
+    } else {
+      if (timeAware) {
+        checks.push(checkItem('fail','Entry ' + fmt(p.entry) + ' was NOT reached after signal time ' + time + ' (post-signal range: ' + fmt(checkL) + ' – ' + fmt(checkH) + ') — signal may be fabricated'));
+      } else {
+        checks.push(checkItem('fail','Entry ' + fmt(p.entry) + ' was OUTSIDE the ' + date + ' range (' + fmt(ohlc.l) + ' – ' + fmt(ohlc.h) + ') — possible fabrication'));
+      }
+    }
+
+    if (p.sl) {
+      const slHit = p.dir==='BUY' ? p.sl>=checkL : p.sl<=checkH;
+      checks.push(checkItem(slHit?'warn':'pass',
+        slHit ? 'SL ' + fmt(p.sl) + ' was reached' + (timeAware?' after signal time':' on signal date') + ' — trade may have closed at loss'
+              : 'SL ' + fmt(p.sl) + ' was not reached' + (timeAware?' after signal time':' on signal date') + ' — trade survived'));
+    }
+
+    // Show hourly candle count
+    if (ohlc.hourly) {
+      checks.push(checkItem('info', 'Hourly data: ' + (ohlc.candles ? ohlc.candles.length : 0) + ' candles analysed for ' + date));
+    }
+
+  } else {
+    checks.push(checkItem('info','No price data for ' + (p.asset||'this asset') + ' on ' + date + ' — verify manually on TradingView'));
+  }
+
+  if (time) { total++; passed++; checks.push(checkItem('pass',`Telegram timestamp ${time} on ${date} — messages cannot be backdated after posting`)); }
+
+  document.getElementById('checkList').innerHTML = checks.join('');
+
+  if (ohlc&&!ohlc.rateLimited) {
+    const levels = [['Entry',p.entry],['SL',p.sl],['TP1',p.tp1],['TP2',p.tp2],['TP3',p.tp3],['TP4',p.tp4]].filter(([,v])=>v!==null);
+    document.getElementById('ohlcTable').innerHTML = levels.map(([lbl,val])=>{
+      const hit = val>=ohlc.l && val<=ohlc.h;
+      return `<tr><td class="td-mono">${lbl}</td><td class="td-mono">${fmt(val)}</td><td class="td-mono">${fmt(ohlc.l)}</td><td class="td-mono">${fmt(ohlc.h)}</td><td class="${hit?'td-green':'td-red'}">${hit?'✓ Reachable':'✗ Outside range'}</td></tr>`;
+    }).join('');
+    document.getElementById('dataSource').textContent = 'Source: Twelve Data API — ' + p.asset + (ohlc.hourly ? ' hourly candles' : ' daily OHLC') + ' for ' + date + (ohlc.hourly ? ' (' + (ohlc.candles ? ohlc.candles.length : 0) + ' candles)' : '');
+  } else {
+    document.getElementById('ohlcTable').innerHTML = `<tr><td colspan="5" style="color:var(--text2);text-align:center;padding:16px;">${'No data returned from Twelve Data — verify manually on TradingView'}</td></tr>`;
+    document.getElementById('dataSource').textContent = '';
+  }
+
+  const score = total>0 ? passed/total : 0;
+  let vClass, vIcon, vTitle, vSub, statusLabel;
+  if (!ohlc||ohlc.rateLimited) {
+    vClass='warn'; vIcon='⚠'; vTitle='Unaudited — price data unavailable';
+    vSub = ohlc?.rateLimited ? 'API rate limit hit. Signal structure valid. Re-verify tomorrow.' : 'Structure valid but entry price unconfirmed. Log as Unaudited.';
+    statusLabel='UNAUDITED';
+  } else if (score>=0.75) {
+    vClass='pass'; vIcon='✓'; vTitle='Verified — signal appears legitimate';
+    vSub='Entry was reachable on signal date. Levels correctly structured. Safe to log as Verified.';
+    statusLabel='VERIFIED';
+  } else {
+    vClass='fail'; vIcon='✗'; vTitle='Failed — possible fabrication';
+    vSub='Entry price not available at the claimed level on this date. Do not log as verified.';
+    statusLabel='FAILED';
+  }
+
+  const vColors  = { pass:'var(--green)',        fail:'var(--red)',        warn:'var(--amber)' };
+  const vBgs     = { pass:'var(--green-dim)',     fail:'var(--red-dim)',    warn:'var(--amber-dim)' };
+  const vBorders = { pass:'var(--green-border)',  fail:'var(--red-border)', warn:'var(--amber-border)' };
+
+  document.getElementById('verdictBox').innerHTML = `
+    <div style="background:${vBgs[vClass]};border:1px solid ${vBorders[vClass]};border-radius:10px;padding:20px 22px;display:flex;align-items:flex-start;gap:16px;">
+      <div style="font-size:22px;color:${vColors[vClass]};flex-shrink:0;">${vIcon}</div>
+      <div>
+        <div style="font-size:15px;font-weight:700;color:${vColors[vClass]};margin-bottom:4px;">${vTitle}</div>
+        <div style="font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.5;">${vSub}</div>
+      </div>
+    </div>`;
+
+  const sColors = { VERIFIED:'var(--green)', FAILED:'var(--red)', UNAUDITED:'var(--amber)' };
+  document.getElementById('verRecord').innerHTML = [
+    ['Status',        `<span style="font-family:var(--mono);font-weight:700;color:${sColors[statusLabel]}">${statusLabel}</span>`],
+    ['Trader',        trader],
+    ['Asset',         p.asset||'—'],
+    ['Entry',         fmt(p.entry)],
+    ['Stop loss',     fmt(p.sl)],
+    ['TPs',           [p.tp1,p.tp2,p.tp3,p.tp4].filter(v=>v!==null).map(v=>fmt(v)).join(' / ')||'—'],
+    ['Date',          date ? date.split('-').reverse().join('/') : '—'],
+    ['Time',          time||'—'],
+    ['Checks passed', `${passed} / ${total}`],
+    ['Data source',   ohlc&&!ohlc.rateLimited?'Alpha Vantage (live)':'Unavailable'],
+  ].map(([l,v])=>recRow(l,v)).join('');
+
+  document.getElementById('results').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function openTradingView() {
+  var asset = document.getElementById('assetOverride').value || 
+              parseSignal(document.getElementById('rawSignal').value).asset;
+  if (!asset) { alert('Asset not detected — please select from the asset override dropdown'); return; }
+  
+  var tvSymbols = {
+    'XAU/USD': 'OANDA:XAUUSD',
+    'EUR/USD': 'FX:EURUSD',
+    'GBP/USD': 'FX:GBPUSD',
+    'USD/JPY': 'FX:USDJPY',
+    'GBP/JPY': 'FX:GBPJPY',
+    'EUR/JPY': 'FX:EURJPY',
+    'AUD/USD': 'FX:AUDUSD',
+    'US30':    'DJ:DJI',
+    'NAS100':  'NASDAQ:NDX',
+  };
+  
+  var symbol = tvSymbols[asset] || asset.replace('/','');
+  var url = 'https://www.tradingview.com/chart/?symbol=' + encodeURIComponent(symbol) + '&interval=60';
+  window.open(url, '_blank');
+}
+</script>
+</body>
+</html>
